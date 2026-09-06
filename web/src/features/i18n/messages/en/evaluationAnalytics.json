@@ -1122,7 +1122,13 @@
       "templateCount": "{count, plural, one {# template} other {# templates}}",
       "all": "All",
       "yourTemplates": "Your templates",
-      "yourTemplatesDescription": "Start from a template this project already created."
+      "yourTemplatesDescription": "Start from a template this project already created.",
+      "managedTemplates": {
+        "userDisagreement": {
+          "name": "Detect User Disagreement",
+          "description": "Detects whether the user perceives the assistant as making an error or heading in the wrong direction."
+        }
+      }
     },
     "rulesPage": {
       "help": "Rules define which incoming observations reusable evaluators run on.",

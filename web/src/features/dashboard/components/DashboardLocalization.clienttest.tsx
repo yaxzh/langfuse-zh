@@ -56,6 +56,15 @@ vi.mock("@/src/utils/api", () => ({
                 updatedAt: new Date("2026-01-01T00:00:00.000Z"),
               },
               {
+                id: "cmtdm68000006ad07dzdb73zw",
+                name: "Langfuse Agent Dashboard",
+                description:
+                  "Monitor agent tool usage: total tool calls, most-called tools, tool errors and latency, and observation type breakdowns.",
+                owner: "LANGFUSE",
+                createdAt: new Date("2026-01-01T00:00:00.000Z"),
+                updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+              },
+              {
                 id: "project-view",
                 name: "Customer dashboard",
                 description: "Customer dashboard description",
@@ -81,22 +90,72 @@ vi.mock("@/src/utils/api", () => ({
     },
     dashboardWidgets: {
       get: {
-        useQuery: () => ({
-          data: {
-            id: "managed-cost-widget-from-installation",
+        useQuery: ({ widgetId }: { widgetId: string }) => {
+          const managedWidgetMetadata: Record<
+            string,
+            { name: string; description: string }
+          > = {
+            cmtdm68000001ad076tqc9kr4: {
+              name: "Total Tool Calls",
+              description:
+                "Total number of tool calls across observations, including parallel tool calls within a single observation",
+            },
+            cmtdm68000002ad076rurfiln: {
+              name: "Total Tool Calls (over time)",
+              description:
+                "Tool call volume over time, including parallel tool calls within a single observation",
+            },
+            cmtdm68000003ad07afj8ag4o: {
+              name: "Top 20 Called Tools",
+              description:
+                "Invocations per tool, including repeated calls within one observation, limited to the top 20",
+            },
+            cmtdm68000007ad07terrbytl: {
+              name: "Tool Errors by Tool",
+              description:
+                "Failed tool executions (ERROR level) per tool, limited to the top 20",
+            },
+            cmtdm68000008ad07p95bytl0: {
+              name: "P 95 Tool Latency by Tool",
+              description:
+                "P95 execution latency of TOOL observations per tool, limited to the top 20",
+            },
+            cmtdm68000009ad07p95ts0tl: {
+              name: "P 95 Tool Latency by Tool (over time)",
+              description:
+                "P95 execution latency of TOOL observations over time, one series per tool",
+            },
+            cmtdm68000004ad07qwlf51rv: {
+              name: "Observations by Type",
+              description:
+                "Distribution of observations by type, e.g. agents, tools, generations, and spans",
+            },
+            cmtdm68000005ad07q12mamip: {
+              name: "P 95 Latency by Observation Type",
+              description: "P95 latency segmented by observation type",
+            },
+          };
+          const metadata = managedWidgetMetadata[widgetId] ?? {
             name: "Total costs",
             description: "Total cost across all use cases",
-            owner: "LANGFUSE",
-            view: "observations",
-            dimensions: [],
-            metrics: [{ measure: "totalCost", agg: "sum" }],
-            filters: [],
-            chartType: "NUMBER",
-            chartConfig: { type: "NUMBER" },
-            minVersion: 1,
-          },
-          isPending: false,
-        }),
+          };
+
+          return {
+            data: {
+              id: widgetId,
+              ...metadata,
+              owner: "LANGFUSE",
+              view: "observations",
+              dimensions: [],
+              metrics: [{ measure: "totalCost", agg: "sum" }],
+              filters: [],
+              chartType: "NUMBER",
+              chartConfig: { type: "NUMBER" },
+              minVersion: 1,
+            },
+            isPending: false,
+          };
+        },
       },
       copyToProject: {
         useMutation: () => ({ mutate: vi.fn(), isPending: false }),
@@ -294,6 +353,7 @@ describe("dashboard localization", () => {
     expect(screen.getByText("Langfuse 成本仪表盘")).toBeInTheDocument();
     expect(screen.getByText("Langfuse 延迟仪表盘")).toBeInTheDocument();
     expect(screen.getByText("Langfuse 用量管理")).toBeInTheDocument();
+    expect(screen.getByText("Langfuse 智能体仪表盘")).toBeInTheDocument();
     expect(screen.getByText("默认")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("搜索仪表盘...")).toBeInTheDocument();
   });
@@ -311,6 +371,12 @@ describe("dashboard localization", () => {
     expect(screen.getByText("Langfuse 用量管理")).toBeInTheDocument();
     expect(
       screen.getByText("跟踪链路、观测和评分的用量指标，以管理资源分配。"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Langfuse 智能体仪表盘")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "监控智能体工具使用情况：工具调用总数、调用最多的工具、工具错误与延迟，以及观测类型分布。",
+      ),
     ).toBeInTheDocument();
   });
 
@@ -340,5 +406,83 @@ describe("dashboard localization", () => {
     expect(screen.getByText("总成本")).toBeInTheDocument();
     expect(screen.getByText("所有用例的总成本")).toBeInTheDocument();
     expect(screen.getByText("总和成本")).toBeInTheDocument();
+  });
+
+  it("localizes every widget in the Langfuse agent dashboard", () => {
+    const widgets = [
+      {
+        id: "cmtdm68000001ad076tqc9kr4",
+        name: "工具调用总次数",
+        description: "所有观测中的工具调用总次数，包括单次观测内的并行工具调用",
+      },
+      {
+        id: "cmtdm68000002ad076rurfiln",
+        name: "工具调用次数趋势",
+        description: "工具调用次数随时间的变化，包括单次观测内的并行工具调用",
+      },
+      {
+        id: "cmtdm68000003ad07afj8ag4o",
+        name: "调用次数最多的 20 个工具",
+        description:
+          "每个工具的调用次数，包括单次观测内的重复调用，仅显示前 20 个",
+      },
+      {
+        id: "cmtdm68000007ad07terrbytl",
+        name: "各工具的错误次数",
+        description: "每个工具的失败执行次数（ERROR 级别），仅显示前 20 个",
+      },
+      {
+        id: "cmtdm68000008ad07p95bytl0",
+        name: "按工具划分的 P95 延迟",
+        description: "每个工具的 TOOL 观测 P95 执行延迟，仅显示前 20 个",
+      },
+      {
+        id: "cmtdm68000009ad07p95ts0tl",
+        name: "按工具划分的 P95 延迟趋势",
+        description: "TOOL 观测的 P95 执行延迟随时间的变化，每个工具一条序列",
+      },
+      {
+        id: "cmtdm68000004ad07qwlf51rv",
+        name: "按类型划分的观测数量",
+        description: "按类型展示观测分布，例如智能体、工具、生成和跨度",
+      },
+      {
+        id: "cmtdm68000005ad07q12mamip",
+        name: "按观测类型划分的 P95 延迟",
+        description: "按观测类型划分的 P95 延迟",
+      },
+    ];
+
+    renderChinese(
+      <>
+        {widgets.map((widget) => (
+          <DashboardWidget
+            key={widget.id}
+            projectId="project-id"
+            dashboardId="dashboard-id"
+            placement={{
+              id: `placement-${widget.id}`,
+              widgetId: widget.id,
+              x: 0,
+              y: 0,
+              x_size: 4,
+              y_size: 4,
+              type: "widget",
+            }}
+            dateRange={undefined}
+            filterState={[]}
+            onDeleteWidget={vi.fn()}
+            dashboardOwner="LANGFUSE"
+            readPath="v3"
+            readOnly
+          />
+        ))}
+      </>,
+    );
+
+    for (const widget of widgets) {
+      expect(screen.getAllByText(widget.name).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(widget.description).length).toBeGreaterThan(0);
+    }
   });
 });

@@ -1122,7 +1122,13 @@
       "templateCount": "{count} 个模板",
       "all": "全部",
       "yourTemplates": "你的模板",
-      "yourTemplatesDescription": "从当前项目已创建的模板开始。"
+      "yourTemplatesDescription": "从当前项目已创建的模板开始。",
+      "managedTemplates": {
+        "userDisagreement": {
+          "name": "检测用户异议",
+          "description": "检测用户是否认为助手出错或正在朝错误方向推进。"
+        }
+      }
     },
     "rulesPage": {
       "help": "规则定义可复用评估器要在哪些传入观测上运行。",

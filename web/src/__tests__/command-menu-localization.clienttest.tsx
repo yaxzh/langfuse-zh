@@ -101,7 +101,27 @@ vi.mock("@/src/features/projects/hooks", () => ({
 vi.mock("@/src/utils/api", () => ({
   api: {
     dashboard: {
-      allDashboards: { useQuery: () => ({ data: { dashboards: [] } }) },
+      allDashboards: {
+        useQuery: () => ({
+          data: {
+            dashboards: [
+              {
+                id: "cmtdm68000006ad07dzdb73zw",
+                name: "Langfuse Agent Dashboard",
+                description:
+                  "Monitor agent tool usage: total tool calls, most-called tools, tool errors and latency, and observation type breakdowns.",
+                owner: "LANGFUSE",
+              },
+              {
+                id: "project-dashboard",
+                name: "Customer dashboard",
+                description: "Customer dashboard description",
+                owner: "PROJECT",
+              },
+            ],
+          },
+        }),
+      },
     },
   },
 }));
@@ -131,6 +151,9 @@ describe("command menu localization", () => {
     expect(screen.getByText("未找到结果。")).toBeVisible();
     expect(screen.getByRole("heading", { name: "主导航" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "项目" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "仪表盘" })).toBeVisible();
+    expect(screen.getByText("Langfuse 智能体仪表盘")).toBeVisible();
+    expect(screen.getByText("Customer dashboard")).toBeVisible();
     expect(screen.getByRole("heading", { name: "项目设置" })).toBeVisible();
     expect(screen.getByText("项目设置 > 通用")).toBeVisible();
     expect(screen.getByRole("heading", { name: "组织设置" })).toBeVisible();

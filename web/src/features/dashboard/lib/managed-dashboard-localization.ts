@@ -10,6 +10,7 @@ const MANAGED_DASHBOARD_MESSAGE_KEYS_BY_ID = {
   cmawoi7yd00aqad07f3why08w: "cost",
   cmawk4ywj00jmad072jn7s0ru: "latency",
   cmawln8k700xqad07000k1q8b: "usage",
+  cmtdm68000006ad07dzdb73zw: "agent",
 } as const;
 
 const MANAGED_DASHBOARD_MESSAGE_KEYS_BY_NAME = {
@@ -17,6 +18,7 @@ const MANAGED_DASHBOARD_MESSAGE_KEYS_BY_NAME = {
   "Langfuse Cost Dashboard": "cost",
   "Langfuse Latency Dashboard": "latency",
   "Langfuse Usage Management": "usage",
+  "Langfuse Agent Dashboard": "agent",
 } as const;
 
 export function getManagedDashboardMessageKey(resource: ManagedResource) {
@@ -61,6 +63,14 @@ const MANAGED_WIDGET_MESSAGE_KEYS_BY_ID = {
   cmawlu5bs00zsad07maibk7ef: "cmawlu5bs00zsad07maibk7ef",
   cmawlw4s700zvad07qq4qi0gp: "cmawlw4s700zvad07qq4qi0gp",
   cmawlxdo00106ad07crpey1if: "cmawlxdo00106ad07crpey1if",
+  cmtdm68000001ad076tqc9kr4: "cmtdm68000001ad076tqc9kr4",
+  cmtdm68000002ad076rurfiln: "cmtdm68000002ad076rurfiln",
+  cmtdm68000003ad07afj8ag4o: "cmtdm68000003ad07afj8ag4o",
+  cmtdm68000007ad07terrbytl: "cmtdm68000007ad07terrbytl",
+  cmtdm68000008ad07p95bytl0: "cmtdm68000008ad07p95bytl0",
+  cmtdm68000009ad07p95ts0tl: "cmtdm68000009ad07p95ts0tl",
+  cmtdm68000004ad07qwlf51rv: "cmtdm68000004ad07qwlf51rv",
+  cmtdm68000005ad07q12mamip: "cmtdm68000005ad07q12mamip",
 } as const;
 
 const MANAGED_WIDGET_MESSAGE_KEYS_BY_NAME = {
@@ -89,6 +99,14 @@ const MANAGED_WIDGET_MESSAGE_KEYS_BY_NAME = {
   "Total Observation Count (over time)": "cmawlt6wi00zmad07cvxeeepq",
   "Total Trace Count (by env)": "cmawlw4s700zvad07qq4qi0gp",
   "Total Observation Count (by env)": "cmawlxdo00106ad07crpey1if",
+  "Total Tool Calls": "cmtdm68000001ad076tqc9kr4",
+  "Total Tool Calls (over time)": "cmtdm68000002ad076rurfiln",
+  "Top 20 Called Tools": "cmtdm68000003ad07afj8ag4o",
+  "Tool Errors by Tool": "cmtdm68000007ad07terrbytl",
+  "P 95 Tool Latency by Tool": "cmtdm68000008ad07p95bytl0",
+  "P 95 Tool Latency by Tool (over time)": "cmtdm68000009ad07p95ts0tl",
+  "Observations by Type": "cmtdm68000004ad07qwlf51rv",
+  "P 95 Latency by Observation Type": "cmtdm68000005ad07q12mamip",
 } as const;
 
 const MANAGED_WIDGET_MESSAGE_KEYS_BY_NAME_AND_DESCRIPTION = {

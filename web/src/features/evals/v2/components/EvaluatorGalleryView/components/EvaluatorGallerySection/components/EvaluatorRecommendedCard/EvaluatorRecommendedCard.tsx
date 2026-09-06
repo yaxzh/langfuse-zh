@@ -9,6 +9,7 @@ import {
   getGalleryTemplatePresentation,
 } from "@/src/features/evals/v2/fns/templateGallery/galleryTemplatePresentation";
 import type { GalleryTemplate } from "@/src/features/evals/v2/types/templateGallery";
+import { useManagedTemplateLocalization } from "@/src/features/evals/v2/hooks/useManagedTemplateLocalization";
 import { cn } from "@/src/utils/tailwind";
 
 export function EvaluatorRecommendedCardSurface({
@@ -86,6 +87,7 @@ export function EvaluatorRecommendedCard({
   onSelect: (template: GalleryTemplate) => void;
 }) {
   const { description, type } = getGalleryTemplatePresentation(template);
+  const localizedTemplate = useManagedTemplateLocalization(template);
   const categoryKey = getGalleryTemplateCategoryKey(template);
 
   return (
@@ -96,8 +98,8 @@ export function EvaluatorRecommendedCard({
     >
       <EvaluatorRecommendedCardSurface>
         <EvaluatorRecommendedTemplateCardContent
-          title={template.name}
-          description={description}
+          title={localizedTemplate?.name ?? template.name}
+          description={localizedTemplate?.description ?? description}
           type={type}
           categoryKey={categoryKey}
         />

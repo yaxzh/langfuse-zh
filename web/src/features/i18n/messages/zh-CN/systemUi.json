@@ -396,6 +396,10 @@
       "usage": {
         "name": "Langfuse 用量管理",
         "description": "跟踪链路、观测和评分的用量指标，以管理资源分配。"
+      },
+      "agent": {
+        "name": "Langfuse 智能体仪表盘",
+        "description": "监控智能体工具使用情况：工具调用总数、调用最多的工具、工具错误与延迟，以及观测类型分布。"
       }
     },
     "description": "描述",
@@ -682,6 +686,38 @@
       "cmawlxdo00106ad07crpey1if": {
         "name": "按环境划分的观测总数",
         "description": "不同环境中的观测数量分布"
+      },
+      "cmtdm68000001ad076tqc9kr4": {
+        "name": "工具调用总次数",
+        "description": "所有观测中的工具调用总次数，包括单次观测内的并行工具调用"
+      },
+      "cmtdm68000002ad076rurfiln": {
+        "name": "工具调用次数趋势",
+        "description": "工具调用次数随时间的变化，包括单次观测内的并行工具调用"
+      },
+      "cmtdm68000003ad07afj8ag4o": {
+        "name": "调用次数最多的 20 个工具",
+        "description": "每个工具的调用次数，包括单次观测内的重复调用，仅显示前 20 个"
+      },
+      "cmtdm68000007ad07terrbytl": {
+        "name": "各工具的错误次数",
+        "description": "每个工具的失败执行次数（ERROR 级别），仅显示前 20 个"
+      },
+      "cmtdm68000008ad07p95bytl0": {
+        "name": "按工具划分的 P95 延迟",
+        "description": "每个工具的 TOOL 观测 P95 执行延迟，仅显示前 20 个"
+      },
+      "cmtdm68000009ad07p95ts0tl": {
+        "name": "按工具划分的 P95 延迟趋势",
+        "description": "TOOL 观测的 P95 执行延迟随时间的变化，每个工具一条序列"
+      },
+      "cmtdm68000004ad07qwlf51rv": {
+        "name": "按类型划分的观测数量",
+        "description": "按类型展示观测分布，例如智能体、工具、生成和跨度"
+      },
+      "cmtdm68000005ad07q12mamip": {
+        "name": "按观测类型划分的 P95 延迟",
+        "description": "按观测类型划分的 P95 延迟"
       }
     },
     "copyCard": "复制卡片",

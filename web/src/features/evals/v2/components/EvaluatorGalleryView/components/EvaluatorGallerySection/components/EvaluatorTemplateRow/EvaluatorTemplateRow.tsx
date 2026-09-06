@@ -1,5 +1,6 @@
 import { EvaluatorGalleryMethodBadge } from "@/src/features/evals/v2/components/EvaluatorGalleryView/components/EvaluatorGalleryMethodBadge/EvaluatorGalleryMethodBadge";
 import { getGalleryTemplatePresentation } from "@/src/features/evals/v2/fns/templateGallery/galleryTemplatePresentation";
+import { useManagedTemplateLocalization } from "@/src/features/evals/v2/hooks/useManagedTemplateLocalization";
 import type { GalleryTemplate } from "@/src/features/evals/v2/types/templateGallery";
 
 export function EvaluatorTemplateRow({
@@ -11,6 +12,9 @@ export function EvaluatorTemplateRow({
 }) {
   const { description, type, attribution } =
     getGalleryTemplatePresentation(template);
+  const localizedTemplate = useManagedTemplateLocalization(template);
+  const displayName = localizedTemplate?.name ?? template.name;
+  const displayDescription = localizedTemplate?.description ?? description;
 
   return (
     <button
@@ -21,15 +25,15 @@ export function EvaluatorTemplateRow({
       <span className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 @3xl:grid-cols-[minmax(10rem,18rem)_minmax(0,1fr)_max-content_6rem]">
         <span
           className="col-start-1 row-start-1 min-w-0 truncate text-sm leading-5 font-bold"
-          title={template.name}
+          title={displayName}
         >
-          {template.name}
+          {displayName}
         </span>
         <span
           className="text-muted-foreground col-span-2 col-start-1 row-start-2 min-w-0 truncate text-sm leading-5 @3xl:col-span-1 @3xl:col-start-2 @3xl:row-start-1"
-          title={description}
+          title={displayDescription}
         >
-          {description}
+          {displayDescription}
         </span>
         {attribution ? (
           <span

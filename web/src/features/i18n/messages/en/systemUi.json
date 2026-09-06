@@ -396,6 +396,10 @@
       "usage": {
         "name": "Langfuse Usage Management",
         "description": "Track usage metrics across traces, observations, and scores to manage resource allocation."
+      },
+      "agent": {
+        "name": "Langfuse Agent Dashboard",
+        "description": "Monitor agent tool usage: total tool calls, most-called tools, tool errors and latency, and observation type breakdowns."
       }
     },
     "description": "Description",
@@ -682,6 +686,38 @@
       "cmawlxdo00106ad07crpey1if": {
         "name": "Total Observation Count (by env)",
         "description": "Distribution of observation count across different environments"
+      },
+      "cmtdm68000001ad076tqc9kr4": {
+        "name": "Total Tool Calls",
+        "description": "Total number of tool calls across observations, including parallel tool calls within a single observation"
+      },
+      "cmtdm68000002ad076rurfiln": {
+        "name": "Total Tool Calls (over time)",
+        "description": "Tool call volume over time, including parallel tool calls within a single observation"
+      },
+      "cmtdm68000003ad07afj8ag4o": {
+        "name": "Top 20 Called Tools",
+        "description": "Invocations per tool, including repeated calls within one observation, limited to the top 20"
+      },
+      "cmtdm68000007ad07terrbytl": {
+        "name": "Tool Errors by Tool",
+        "description": "Failed tool executions (ERROR level) per tool, limited to the top 20"
+      },
+      "cmtdm68000008ad07p95bytl0": {
+        "name": "P 95 Tool Latency by Tool",
+        "description": "P95 execution latency of TOOL observations per tool, limited to the top 20"
+      },
+      "cmtdm68000009ad07p95ts0tl": {
+        "name": "P 95 Tool Latency by Tool (over time)",
+        "description": "P95 execution latency of TOOL observations over time, one series per tool"
+      },
+      "cmtdm68000004ad07qwlf51rv": {
+        "name": "Observations by Type",
+        "description": "Distribution of observations by type, e.g. agents, tools, generations, and spans"
+      },
+      "cmtdm68000005ad07q12mamip": {
+        "name": "P 95 Latency by Observation Type",
+        "description": "P95 latency segmented by observation type"
       }
     },
     "copyCard": "Copy card",

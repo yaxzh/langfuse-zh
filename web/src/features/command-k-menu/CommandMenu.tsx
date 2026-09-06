@@ -23,6 +23,7 @@ import { api } from "@/src/utils/api";
 import { type NavigationItem } from "@/src/components/layouts/utilities/routes";
 import { useTranslations } from "next-intl";
 import { useReadPath } from "@/src/features/events/hooks/useReadPath";
+import { getManagedDashboardMessageKey } from "@/src/features/dashboard/lib/managed-dashboard-localization";
 
 type IdNavigationItem = {
   type: "trace_id" | "observation_id";
@@ -149,6 +150,9 @@ function ProjectsGroup({ onNavigate }: { onNavigate: () => void }) {
 
 function DashboardsGroup({ onNavigate }: { onNavigate: () => void }) {
   const t = useTranslations("commandMenu");
+  const managedDashboardT = useTranslations(
+    "systemUi.dashboardExtras.managedDashboards",
+  );
   const router = useRouter();
   const capture = usePostHogClientCapture();
   const { project } = useQueryProjectOrOrganization();
@@ -177,30 +181,42 @@ function DashboardsGroup({ onNavigate }: { onNavigate: () => void }) {
     <>
       <CommandSeparator />
       <CommandGroup heading={t("dashboards")}>
-        {dashboards.map((dashboard) => (
-          <CommandItem
-            key={dashboard.id}
-            value={`Dashboard > ${dashboard.name}`}
-            keywords={[
-              "dashboard",
-              dashboard.name.toLowerCase(),
-              (dashboard.description ?? "").toLowerCase(),
-            ]}
-            disabled={router.query.dashboardId === dashboard.id}
-            onSelect={() => {
-              const url = `/project/${project?.id}/dashboards/${dashboard.id}`;
-              router.push(url);
-              capture("cmd_k_menu:navigated", {
-                type: "dashboard",
-                title: `Dashboard > ${dashboard.name}`,
-                url: url,
-              });
-              onNavigate();
-            }}
-          >
-            {dashboard.name}
-          </CommandItem>
-        ))}
+        {dashboards.map((dashboard) => {
+          const messageKey = getManagedDashboardMessageKey(dashboard);
+          const displayName = messageKey
+            ? managedDashboardT(`${messageKey}.name`)
+            : dashboard.name;
+          const displayDescription = messageKey
+            ? managedDashboardT(`${messageKey}.description`)
+            : (dashboard.description ?? "");
+
+          return (
+            <CommandItem
+              key={dashboard.id}
+              value={`Dashboard > ${displayName}`}
+              keywords={[
+                "dashboard",
+                dashboard.name.toLowerCase(),
+                displayName.toLowerCase(),
+                (dashboard.description ?? "").toLowerCase(),
+                displayDescription.toLowerCase(),
+              ]}
+              disabled={router.query.dashboardId === dashboard.id}
+              onSelect={() => {
+                const url = `/project/${project?.id}/dashboards/${dashboard.id}`;
+                router.push(url);
+                capture("cmd_k_menu:navigated", {
+                  type: "dashboard",
+                  title: `Dashboard > ${dashboard.name}`,
+                  url: url,
+                });
+                onNavigate();
+              }}
+            >
+              {displayName}
+            </CommandItem>
+          );
+        })}
       </CommandGroup>
     </>
   );

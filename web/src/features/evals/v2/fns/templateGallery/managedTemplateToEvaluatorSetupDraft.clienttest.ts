@@ -37,4 +37,25 @@ describe("managedTemplateToEvaluatorSetupDraft", () => {
       },
     });
   });
+
+  it("accepts localized metadata without changing the evaluator definition", () => {
+    const template = MANAGED_TEMPLATES_CATALOG.templates.find(
+      ({ key }) => key === "user-disagreement",
+    );
+    expect(template).toBeDefined();
+
+    expect(
+      managedTemplateToEvaluatorSetupDraft(template!, {
+        name: "检测用户异议",
+        description: "检测用户是否认为助手出错或正在朝错误方向推进。",
+      }),
+    ).toMatchObject({
+      name: "检测用户异议",
+      description: "检测用户是否认为助手出错或正在朝错误方向推进。",
+      definition: {
+        type: "LLM_AS_JUDGE",
+        vars: ["conversation_history", "last_user_message"],
+      },
+    });
+  });
 });

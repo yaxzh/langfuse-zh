@@ -5,6 +5,7 @@ import type {
 
 export function managedTemplateToEvaluatorSetupDraft(
   template: ManagedTemplate,
+  localizedMetadata?: Pick<EvaluatorSetupDraft, "name" | "description">,
 ): EvaluatorSetupDraft {
   const definition =
     template.evaluator.type === "LLM_AS_JUDGE"
@@ -31,8 +32,8 @@ export function managedTemplateToEvaluatorSetupDraft(
         };
 
   return {
-    name: template.name,
-    description: template.description,
+    name: localizedMetadata?.name ?? template.name,
+    description: localizedMetadata?.description ?? template.description,
     definition,
   };
 }
