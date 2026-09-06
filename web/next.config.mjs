@@ -150,6 +150,9 @@ const nextConfig = {
     browserToTerminal: true,
   },
   experimental: {
+    cpus: process.env.NEXT_BUILD_CPUS
+      ? Number(process.env.NEXT_BUILD_CPUS)
+      : undefined,
     // Use the Rust port instead of the Babel transform
     // turbopackRustReactCompiler: true,
     // Keep `new Worker(new URL(..., import.meta.url))` on the app origin when
