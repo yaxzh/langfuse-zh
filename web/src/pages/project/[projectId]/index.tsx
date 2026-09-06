@@ -39,7 +39,7 @@ import {
   useDashboardQueryScheduler,
 } from "@/src/features/dashboard/hooks/useDashboardQueryScheduler";
 import Link from "next/link";
-import { LockIcon, PencilIcon } from "lucide-react";
+import { PencilIcon } from "lucide-react";
 import { showErrorToast } from "@/src/features/notifications/showErrorToast";
 import { useHasProjectAccess } from "@/src/features/rbac/utils/checkProjectAccess";
 import { usePostHogClientCapture } from "@/src/features/posthog-analytics/usePostHogClientCapture";
@@ -47,8 +47,8 @@ import { Button } from "@/src/components/ui/button";
 import { DashboardGrid } from "@/src/features/widgets/components/DashboardGrid";
 import { HomeDashboardSelect } from "@/src/features/dashboard/components/HomeDashboardSelect";
 import { useQueryProjectOrOrganization } from "@/src/features/projects/hooks";
-import { setupTracingRoute } from "@/src/features/setup/setupRoutes";
 import { useTranslations } from "next-intl";
+import { ConfigureTracingButton } from "@/src/features/setup/components/ConfigureTracingButton";
 
 // Controller: no widget query may fire before the session resolves the v3/v4
 // read path — an unresolved session used to read as v3, fire a full wave of
@@ -396,22 +396,12 @@ function HomeDashboard({ readPath }: { readPath: ResolvedReadPath }) {
                   <span className="sr-only">{t("editDashboard")}</span>
                 </Link>
               </Button>
-              {!isTracingCheckLoading &&
-                !hasTracingConfigured &&
-                project &&
-                (hasSetupTracingAccess ? (
-                  <Link href={setupTracingRoute(project.id)}>
-                    <Button>Configure Tracing</Button>
-                  </Link>
-                ) : (
-                  <Button disabled>
-                    <LockIcon
-                      className="mr-2 -ml-0.5 h-4 w-4"
-                      aria-hidden="true"
-                    />
-                    Configure Tracing
-                  </Button>
-                ))}
+              {!isTracingCheckLoading && !hasTracingConfigured && project && (
+                <ConfigureTracingButton
+                  hasAccess={hasSetupTracingAccess}
+                  projectId={project.id}
+                />
+              )}
             </>
           ),
         }}
