@@ -5,6 +5,13 @@
 > [!IMPORTANT]
 > 本仓库是基于 [Langfuse 官方仓库](https://github.com/langfuse/langfuse)维护的社区汉化版本，并非 Langfuse 官方发行版。Web 界面支持 English 和简体中文，可在登录页或个人设置中切换语言。
 
+## 汉化范围
+
+- 已汉化 Langfuse Web 界面的主要用户流程，包括登录与注册、导航、个人配置、组织与项目设置、追踪与观测、会话、提示词、数据集、评估、实验、Playground、模型连接以及全部仪表盘。
+- API 与 SDK、CLI 命令、服务端日志、代码、环境变量、数据库字段、模型与供应商名称，以及用户自行创建的内容不在汉化范围内，继续保留原文以确保兼容性和排障信息准确。
+- 默认语言可在 English 与简体中文之间切换；首次访问默认为英文，可在登录页或个人设置中选择简体中文。
+- 当前版本基于 [Langfuse 上游项目](https://github.com/langfuse/langfuse) v4.30.0，并包含截至本次发布时的部分 `main` 分支更新；后续同步时间与频率不作保证。
+
 <div align="center">
   <div>
     <h3>
@@ -90,13 +97,6 @@
 
 Langfuse 是一个**开源 LLM 工程平台**，帮助团队协作**开发、监控、评估和调试** AI 应用。Langfuse 可以在几分钟内完成自托管，并已在生产环境中得到广泛验证。其分析能力由开源数据库 [ClickHouse](https://github.com/ClickHouse/ClickHouse) 提供支持。
 
-## 汉化版说明
-
-- 默认语言仍可在 English 与简体中文之间切换；首次访问时默认为英文，可在登录页或个人设置中选择简体中文。
-- 汉化范围覆盖认证、导航、项目与组织设置、可观测性、提示词、数据集、评估、实验和仪表盘等主要 Web 界面。
-- API 字段、模型名称、代码、环境变量和用户创建的内容保留原文，避免影响兼容性。
-- 本仓库会持续跟进 [Langfuse 上游项目](https://github.com/langfuse/langfuse)；最近一次同步包含 Langfuse v4.30.0 及其后续 `main` 分支更新。
-
 [![Langfuse 概览视频](https://github.com/user-attachments/assets/3926b288-ff61-4b95-8aa1-45d041c70866)](https://langfuse.com/watch-demo)
 
 ## ✨ 核心特性
@@ -133,18 +133,21 @@ Langfuse 是一个**开源 LLM 工程平台**，帮助团队协作**开发、监
 在你自己的基础设施上运行 Langfuse：
 
 > [!WARNING]
-> Langfuse 官方预构建 Docker 镜像不包含本仓库的汉化代码。要使用中文界面，请从本仓库源码构建镜像。
+> Langfuse 官方预构建 Docker 镜像不包含本仓库的汉化代码。请使用本仓库发布到 GHCR 的社区版镜像，或从源码自行构建。
 
-- 本地体验：使用 Docker Compose 从源码构建并启动汉化版本。
+- 本地体验：使用 Docker Compose 拉取并启动预构建的汉化版本。
 
   ```bash
   # 获取简体中文社区版源码
   git clone --depth=1 https://github.com/yaxzh/langfuse-zh.git
   cd langfuse-zh
 
-  # 从当前源码构建并启动 Web、Worker 及依赖服务
-  docker compose -f docker-compose.build.yml up --build
+  # 拉取并在后台启动 Web、Worker 及依赖服务
+  docker compose pull
+  docker compose up -d
   ```
+
+  `docker-compose.yml` 默认使用 `4.30.0-zh.1` 镜像。可在 `.env` 中设置 `LANGFUSE_IMAGE_TAG=latest` 跟随最新社区版镜像。需要从当前源码构建时，运行 `docker compose -f docker-compose.build.yml up --build -d`。
 
   启动完成后访问 [http://localhost:3000](http://localhost:3000)。上述默认配置仅适合本地体验，生产部署前请按照官方[自托管文档](https://langfuse.com/self-hosting)配置安全密钥、持久化存储和网络访问策略。
 
