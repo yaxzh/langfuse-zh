@@ -1,4 +1,7 @@
-import { extractValueFromObjectAsString } from "@langfuse/shared";
+import {
+  type CodeEvalTemplateVariable,
+  extractValueFromObjectAsString,
+} from "@langfuse/shared";
 
 import type { VariableFieldState } from "@/src/features/evals/v2/types/variableMapping";
 import { buildEvaluatorVariableMappings } from "@/src/features/evals/v2/fns/variableMapping/buildEvaluatorVariableMappings";
@@ -10,11 +13,21 @@ export function preparePromptEditorState({
   variableFields,
   promptPreviewEnabled,
   sampleObject,
+  columnLabels,
+  messages,
 }: {
   prompt: string;
   variableFields: Record<string, VariableFieldState>;
   promptPreviewEnabled: boolean;
   sampleObject: Record<string, unknown> | null;
+  columnLabels?: Partial<Record<CodeEvalTemplateVariable, string>>;
+  messages?: {
+    notMapped: string;
+    emptyMapping: string;
+    sampleRequired: string;
+    mapVariable: (variable: string) => string;
+    fixVariable: (variable: string) => string;
+  };
 }) {
   const mappings = buildEvaluatorVariableMappings({
     promptMessages: [{ role: "user", content: prompt }],
@@ -23,7 +36,7 @@ export function preparePromptEditorState({
   const promptVariableMappings = Object.fromEntries(
     mappings.map(({ variable, fieldState }) => [
       variable,
-      evalVariableColumnLabel(fieldState.selectedColumnId) ?? "",
+      evalVariableColumnLabel(fieldState.selectedColumnId, columnLabels) ?? "",
     ]),
   );
   const promptVariableStatus = Object.fromEntries(
@@ -31,7 +44,10 @@ export function preparePromptEditorState({
       if (!fieldState.selectedColumnId) {
         return [
           variable,
-          { status: "invalid" as const, message: "Not mapped to sample data" },
+          {
+            status: "invalid" as const,
+            message: messages?.notMapped ?? "Not mapped to sample data",
+          },
         ];
       }
       if (!sampleObject) {
@@ -55,7 +71,9 @@ export function preparePromptEditorState({
             variable,
             {
               status: "invalid" as const,
-              message: "The mapping is empty in the selected sample",
+              message:
+                messages?.emptyMapping ??
+                "The mapping is empty in the selected sample",
             },
           ];
     }),
@@ -64,6 +82,13 @@ export function preparePromptEditorState({
     prompt,
     mappings,
     sourceObject: sampleObject,
+    messages: messages
+      ? {
+          sampleRequired: messages.sampleRequired,
+          mapVariable: messages.mapVariable,
+          fixVariable: messages.fixVariable,
+        }
+      : undefined,
   });
 
   return {

@@ -5,6 +5,7 @@ import {
   singleFilter,
 } from "@langfuse/shared";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { DialogBody } from "@/src/components/ui/dialog";
 import { RuleDialogFooter } from "@/src/features/evals/v2/components/Rules/RuleDialogFooter/RuleDialogFooter";
 import { RuleSetup } from "@/src/features/evals/v2/components/Rules/RuleSetup/RuleSetup";
@@ -35,6 +36,7 @@ export function EditRuleDialogContent({
   hasWriteAccess: boolean;
   onClose: () => void;
 }) {
+  const t = useTranslations("evaluationAnalytics.evaluations");
   const capture = usePostHogClientCapture();
   const utils = api.useUtils();
   const [ruleSetupStore] = useState(() =>
@@ -111,8 +113,8 @@ export function EditRuleDialogContent({
       });
     }
     showSuccessToast({
-      title: "Rule saved",
-      description: "Your changes have been saved.",
+      title: t("rules.notifications.savedTitle"),
+      description: t("rules.notifications.savedDescription"),
     });
     await Promise.all([
       utils.evalsV2.rules.list.invalidate({ projectId }),

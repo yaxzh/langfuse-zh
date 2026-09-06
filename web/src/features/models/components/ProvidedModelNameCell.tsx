@@ -1,6 +1,7 @@
 import { PlusCircle } from "lucide-react";
 import { IdTableCell } from "@/src/components/design-system/table/components/IdTableCell/IdTableCell";
 import { UpsertModelFormDialog } from "@/src/features/models/components/UpsertModelFormDialog/UpsertModelFormDialog";
+import { useTranslations } from "next-intl";
 
 /**
  * Renders the "Provided Model Name" cell shared by the generations and events
@@ -24,6 +25,8 @@ export function ProvidedModelNameCell({
   projectId: string;
   usageDetails: Record<string, number>;
 }) {
+  const t = useTranslations("systemUi.miscUi.general");
+
   // Both states wrap the name in the same inline-flex so the text sits at an
   // identical baseline whether or not the trailing affordance is present.
   if (modelId) {
@@ -62,7 +65,7 @@ export function ProvidedModelNameCell({
       */}
       <button
         type="button"
-        title={`Add a model definition for "${modelName}"`}
+        title={t("addModelDefinition", { name: modelName })}
         onClick={(e) => e.stopPropagation()}
         className="inline-flex max-w-full min-w-0 cursor-pointer items-center gap-1 text-left"
       >

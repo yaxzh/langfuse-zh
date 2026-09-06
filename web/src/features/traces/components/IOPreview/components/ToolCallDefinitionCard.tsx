@@ -13,6 +13,7 @@ import {
   HoverCardTrigger,
 } from "@/src/components/ui/hover-card";
 import type { ToolCallInvocation } from "../../../hooks/useChatMLParser";
+import { useTranslations } from "next-intl";
 
 // Tool definition extracted from messages
 export interface ToolDefinition {
@@ -68,6 +69,7 @@ function ToolCallArgumentsList({
   toolCalls: ToolCallInvocation[];
   className?: string;
 }) {
+  const t = useTranslations("coreDetails.traces.tools");
   return (
     <div className={cn("flex flex-col gap-3", className)}>
       {toolCalls.map((toolCall) => {
@@ -80,7 +82,7 @@ function ToolCallArgumentsList({
           >
             <div className="mb-1.5 flex min-w-0 items-center justify-between gap-2">
               <div className="text-foreground font-mono text-xs font-bold">
-                Call {toolCall.invocationNumber}
+                {t("call", { number: toolCall.invocationNumber })}
               </div>
               {toolCall.id && (
                 <div
@@ -99,7 +101,7 @@ function ToolCallArgumentsList({
               />
             ) : (
               <div className="text-muted-foreground rounded-sm border px-2 py-1.5 text-xs">
-                No arguments
+                {t("noArguments")}
               </div>
             )}
           </div>
@@ -107,12 +109,6 @@ function ToolCallArgumentsList({
       })}
     </div>
   );
-}
-
-function getStatusText(callCount: number) {
-  if (callCount === 0) return "not called";
-  if (callCount === 1) return "called";
-  return `called ${callCount}x`;
 }
 
 function ToolGroupHoverContent({
@@ -124,6 +120,7 @@ function ToolGroupHoverContent({
   toolCallCounts: Map<string, number>;
   toolNameToDefinitionNumber?: Map<string, number>;
 }) {
+  const t = useTranslations("coreDetails.traces.tools");
   return (
     <HoverCardContent
       side="bottom"
@@ -163,7 +160,11 @@ function ToolGroupHoverContent({
                     "bg-light-green text-dark-green hover:bg-light-green border-transparent select-none",
                 )}
               >
-                {getStatusText(callCount)}
+                {callCount === 0
+                  ? t("notCalled")
+                  : callCount === 1
+                    ? t("called")
+                    : t("calledCount", { count: callCount })}
               </Badge>
             </div>
           );
@@ -188,10 +189,11 @@ function ToolGroupSummary({
   toolCallCounts: Map<string, number>;
   toolNameToDefinitionNumber?: Map<string, number>;
 }) {
+  const t = useTranslations("coreDetails.traces.tools");
   const isCalledGroup = kind === "called";
   const summaryText = isCalledGroup
-    ? `${tools.length} ${tools.length === 1 ? "tool was" : "tools were"} called`
-    : `${tools.length} available ${tools.length === 1 ? "tool was" : "tools were"} not called`;
+    ? t("calledSummary", { count: tools.length })
+    : t("availableSummary", { count: tools.length });
 
   const summaryButton = (
     <button
@@ -230,7 +232,7 @@ function ToolGroupSummary({
               "bg-light-green text-dark-green hover:bg-light-green border-transparent select-none",
           )}
         >
-          {expanded ? "hide" : "show"}
+          {expanded ? t("hide") : t("show")}
         </Badge>
         {expanded ? (
           <ChevronDown className="text-muted-foreground h-3.5 w-3.5" />
@@ -266,6 +268,7 @@ function ToolCallStatusBadge({
   statusText: string;
   toolCalls: ToolCallInvocation[];
 }) {
+  const t = useTranslations("coreDetails.traces.tools");
   const badge = (
     <Badge
       variant={isCalled ? undefined : "secondary"}
@@ -296,10 +299,10 @@ function ToolCallStatusBadge({
       >
         <div className="border-border border-b px-3 py-2">
           <div className="text-foreground text-xs font-bold">
-            Tool call arguments
+            {t("arguments")}
           </div>
           <div className="text-muted-foreground text-xs">
-            {toolCalls.length === 1 ? "1 call" : `${toolCalls.length} calls`}
+            {t("calls", { count: toolCalls.length })}
           </div>
         </div>
         <ToolCallArgumentsList toolCalls={toolCalls} className="p-3" />
@@ -327,8 +330,14 @@ function ToolDefinitionRow({
   currentView: "formatted" | "json";
   setCurrentView: (value: "formatted" | "json") => void;
 }) {
+  const t = useTranslations("coreDetails.traces.tools");
   const isCalled = callCount > 0;
-  const statusText = getStatusText(callCount);
+  const statusText =
+    callCount === 0
+      ? t("notCalled")
+      : callCount === 1
+        ? t("called")
+        : t("calledCount", { count: callCount });
 
   return (
     <div className="w-full overflow-hidden rounded-sm border">
@@ -377,7 +386,11 @@ function ToolDefinitionRow({
                 }
               >
                 <Tabs.List size="sm">
-                  <Tabs.Trigger value="formatted" size="sm" label="Formatted" />
+                  <Tabs.Trigger
+                    value="formatted"
+                    size="sm"
+                    label={t("formatted")}
+                  />
                   <Tabs.Trigger value="json" size="sm" label="JSON" />
                 </Tabs.List>
               </Tabs>
@@ -389,7 +402,7 @@ function ToolDefinitionRow({
               {tool.description && (
                 <div>
                   <div className="text-muted-foreground mb-1.5 text-xs font-bold">
-                    Description
+                    {t("description")}
                   </div>
                   <div className="ph-no-capture text-foreground text-sm">
                     {tool.description}
@@ -400,7 +413,7 @@ function ToolDefinitionRow({
               {tool.parameters && (
                 <div>
                   <div className="text-muted-foreground mb-1.5 text-xs font-bold">
-                    Parameters
+                    {t("parameters")}
                   </div>
                   <PrettyJsonView
                     json={tool.parameters}
@@ -413,7 +426,7 @@ function ToolDefinitionRow({
               {toolCalls.length > 0 && (
                 <div>
                   <div className="text-muted-foreground mb-1.5 text-xs font-bold">
-                    Tool call arguments
+                    {t("arguments")}
                   </div>
                   <ToolCallArgumentsList toolCalls={toolCalls} />
                 </div>
@@ -423,7 +436,7 @@ function ToolDefinitionRow({
                 !tool.parameters &&
                 toolCalls.length === 0 && (
                   <div className="text-muted-foreground text-sm">
-                    No additional details available
+                    {t("noDetails")}
                   </div>
                 )}
             </div>

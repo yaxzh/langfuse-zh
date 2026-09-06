@@ -14,6 +14,7 @@ import type {
   MappingTarget,
 } from "../types";
 import { isJsonPath } from "@langfuse/shared";
+import { useTranslations } from "next-intl";
 
 type CustomMappingEditorProps = {
   config: CustomMappingConfig;
@@ -28,6 +29,7 @@ export function CustomMappingEditor({
   defaultSourceField,
   observationData,
 }: CustomMappingEditorProps) {
+  const t = useTranslations("operationsUi.batchActions.addToDataset.mapping");
   const handleTypeChange = (type: MappingTarget) => {
     if (type === "root") {
       onChange({
@@ -144,15 +146,15 @@ export function CustomMappingEditor({
   return (
     <div className="bg-muted/30 space-y-2 rounded-md border p-4">
       <div>
-        <Label className="text-sm font-bold">Target</Label>
+        <Label className="text-sm font-bold">{t("target")}</Label>
         <div className="mt-2">
           <Tabs
             value={config.type}
             onValueChange={(v) => handleTypeChange(v as MappingTarget)}
           >
             <Tabs.List layout="full">
-              <Tabs.Trigger value="root" label="Root" />
-              <Tabs.Trigger value="keyValueMap" label="Key-value map" />
+              <Tabs.Trigger value="root" label={t("root")} />
+              <Tabs.Trigger value="keyValueMap" label={t("keyValueMap")} />
             </Tabs.List>
           </Tabs>
         </div>
@@ -161,7 +163,7 @@ export function CustomMappingEditor({
       {config.type === "root" && (
         <div className="space-y-4">
           <div>
-            <Label className="text-sm font-bold">Source</Label>
+            <Label className="text-sm font-bold">{t("source")}</Label>
             <div className="mt-1">
               <SourceFieldSelector
                 value={config.rootConfig?.sourceField ?? defaultSourceField}
@@ -170,7 +172,7 @@ export function CustomMappingEditor({
             </div>
           </div>
           <div>
-            <Label className="text-sm font-bold">JSONPath</Label>
+            <Label className="text-sm font-bold">{t("jsonPath")}</Label>
             <div className="mt-1">
               <JsonPathInput
                 value={config.rootConfig?.jsonPath ?? "$."}
@@ -182,7 +184,7 @@ export function CustomMappingEditor({
               />
             </div>
             <p className="text-muted-foreground p-1 text-xs">
-              Start with $. to use a JSONPath (e.g., $.field)
+              {t("jsonPathHint")}
             </p>
           </div>
         </div>
@@ -190,10 +192,9 @@ export function CustomMappingEditor({
 
       {config.type === "keyValueMap" && (
         <div className="max-h-[35vh] space-y-3 overflow-auto">
-          <Label className="text-sm font-bold">Key-value mappings</Label>
+          <Label className="text-sm font-bold">{t("keyValueMappings")}</Label>
           <p className="text-muted-foreground text-xs">
-            Build an object with custom keys. Values starting with $ are treated
-            as JSONPaths.
+            {t("keyValueDescription")}
           </p>
 
           <div className="space-y-3">
@@ -231,7 +232,7 @@ export function CustomMappingEditor({
             className="w-full"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Add field
+            {t("addField")}
           </Button>
         </div>
       )}
@@ -258,6 +259,7 @@ function KeyValueEntryRow({
   canRemove,
   sourceData,
 }: KeyValueEntryRowProps) {
+  const t = useTranslations("operationsUi.batchActions.addToDataset.mapping");
   const isPath = isJsonPath(entry.value);
   const isSchemaField = entry.fromSchema === true;
   const isRequired = entry.isRequired === true;
@@ -271,10 +273,10 @@ function KeyValueEntryRow({
       <div className="grid grid-cols-[1fr_auto] gap-2">
         <div>
           <Label className="text-muted-foreground text-xs">
-            Key
+            {t("key")}
             {isRequired && <span className="text-destructive ml-1">*</span>}
             {isSchemaField && (
-              <span className="text-primary ml-2">(from schema)</span>
+              <span className="text-primary ml-2">{t("fromSchema")}</span>
             )}
           </Label>
           <Input
@@ -296,8 +298,8 @@ function KeyValueEntryRow({
             className="h-8 w-8 p-0"
             title={
               isSchemaField && isRequired
-                ? "Required schema field cannot be removed"
-                : "Remove field"
+                ? t("requiredFieldCannotBeRemoved")
+                : t("removeField")
             }
           >
             <Trash2
@@ -313,7 +315,7 @@ function KeyValueEntryRow({
 
       <div className="grid grid-cols-[38fr_62fr] gap-2">
         <div>
-          <Label className="text-muted-foreground text-xs">Source</Label>
+          <Label className="text-muted-foreground text-xs">{t("source")}</Label>
           <div className="mt-1">
             <SourceFieldSelector
               value={entry.sourceField}
@@ -324,7 +326,7 @@ function KeyValueEntryRow({
         </div>
         <div>
           <Label className="text-muted-foreground text-xs">
-            Value {!isPath && "(literal)"}
+            {t("value")} {!isPath && t("literal")}
           </Label>
           <div className="mt-1">
             {isPath ? (
@@ -339,13 +341,13 @@ function KeyValueEntryRow({
               <Input
                 value={entry.value}
                 onChange={(e) => onValueChange(e.target.value)}
-                placeholder="literal value"
+                placeholder={t("literalPlaceholder")}
                 className="h-9"
               />
             )}
 
             <p className="text-muted-foreground pt-1 text-xs">
-              Start with $. to use a JSONPath (e.g., $.field)
+              {t("jsonPathHint")}
             </p>
           </div>
         </div>

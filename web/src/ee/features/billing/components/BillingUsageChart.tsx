@@ -7,8 +7,10 @@ import { Card } from "@/src/components/ui/card";
 import { numberFormatter, compactNumberFormatter } from "@/src/utils/numbers";
 import { type Plan } from "@langfuse/shared";
 import { MAX_EVENTS_FREE_PLAN } from "@/src/ee/features/billing/constants";
+import { useTranslations } from "next-intl";
 
 export const BillingUsageChart = () => {
+  const t = useTranslations("settingsEnterprise.billing.usage");
   const organization = useQueryOrganization();
 
   const usage = api.cloudBilling.getUsage.useQuery(
@@ -29,9 +31,10 @@ export const BillingUsageChart = () => {
     organization?.cloudConfig?.monthlyObservationLimit ?? MAX_EVENTS_FREE_PLAN;
   const plan: Plan = organization?.plan ?? "cloud:hobby";
   const usageType = usage.data?.usageType
-    ? usage.data.usageType.charAt(0).toUpperCase() +
-      usage.data.usageType.slice(1)
-    : "Events";
+    ? usage.data.usageType.toLowerCase() === "events"
+      ? t("events")
+      : usage.data.usageType
+    : t("events");
 
   if (usage.data === null) {
     // Might happen in dev mode if STRIPE_SECRET_KEY is not set
@@ -46,8 +49,8 @@ export const BillingUsageChart = () => {
           <>
             <p className="text-muted-foreground text-sm">
               {usage.data.billingPeriod
-                ? `Consumed ${usageType} in current billing period (updated about once every 60 minutes)`
-                : `Consumed ${usageType} / last 30d`}
+                ? t("currentPeriod", { usageType })
+                : t("last30Days", { usageType })}
             </p>
             <div className="text-3xl font-bold">
               {numberFormatter(usage.data.usageCount, 0)}
@@ -57,12 +60,20 @@ export const BillingUsageChart = () => {
                 <div className="mt-4 flex justify-between">
                   <span className="text-sm">{`${numberFormatter((usage.data.usageCount / hobbyPlanLimit) * 100)}%`}</span>
                   <span className="text-sm">
-                    Plan limit: {compactNumberFormatter(hobbyPlanLimit)}
+                    {t("planLimit", {
+                      limit: compactNumberFormatter(hobbyPlanLimit),
+                    })}
                   </span>
                 </div>
                 <div
                   className="bg-muted mt-3 h-2 w-full overflow-hidden rounded-full"
                   role="progressbar"
+                  aria-label={t("progressLabel")}
+                  aria-valuetext={t("progressValue", {
+                    percentage: numberFormatter(
+                      (usage.data.usageCount / hobbyPlanLimit) * 100,
+                    ),
+                  })}
                   aria-valuenow={Math.min(
                     (usage.data.usageCount / hobbyPlanLimit) * 100,
                     100,
@@ -84,9 +95,7 @@ export const BillingUsageChart = () => {
             )}
           </>
         ) : (
-          <span className="text-muted-foreground text-sm">
-            Loading (might take a moment) ...
-          </span>
+          <span className="text-muted-foreground text-sm">{t("loading")}</span>
         )}
       </Card>
     </div>

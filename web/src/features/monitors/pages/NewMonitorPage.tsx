@@ -8,6 +8,7 @@ import { getInitialMonitorTriggerIds } from "@/src/features/monitors/fns/getInit
 import { getMonitorPrefill } from "@/src/features/monitors/fns/getMonitorPrefill";
 import { api } from "@/src/utils/api";
 import { TriggerEventSource } from "@langfuse/shared";
+import { useTranslations } from "next-intl";
 
 const alertAnalyticsSource = (alert: string | string[] | undefined) => {
   switch (alert) {
@@ -24,6 +25,7 @@ const alertAnalyticsSource = (alert: string | string[] | undefined) => {
 
 /** NewMonitorPage renders the create-monitor form for a project. */
 export default function NewMonitorPage() {
+  const t = useTranslations("operationsUi.monitors.pages");
   const router = useRouter();
   const projectId = router.query.projectId as string;
   const prefill = router.isReady ? getMonitorPrefill(router.query) : undefined;
@@ -43,9 +45,9 @@ export default function NewMonitorPage() {
       <Page
         withPadding
         headerProps={{
-          title: "New Alert",
+          title: t("newAlert"),
           breadcrumb: [
-            { name: "Alerts", href: `/project/${projectId}/alerts` },
+            { name: t("alerts"), href: `/project/${projectId}/alerts` },
           ],
         }}
       >

@@ -9,6 +9,7 @@ import {
 } from "@/src/components/ui/dropdown-menu";
 import { Button } from "@/src/components/ui/button";
 import { Settings2, Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { type IoRenderMode } from "@/src/components/table/data-table-io-render-mode-switch";
 import {
   type ExperimentDiffMode,
@@ -62,6 +63,7 @@ export function ExperimentDisplaySettings({
   ioRenderMode,
   onIoRenderModeChange,
 }: ExperimentDisplaySettingsProps) {
+  const t = useTranslations("evaluationAnalytics.experiments");
   const isItemVisibilityDisabled = !hasComparisons || !hasBaseline;
 
   return (
@@ -69,73 +71,73 @@ export function ExperimentDisplaySettings({
       <DropdownMenuTrigger asChild>
         <Button variant="outline">
           <Settings2 className="h-4 w-4" />
-          <span className="ml-2 hidden md:inline">Display</span>
+          <span className="ml-2 hidden md:inline">{t("display.label")}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel>Layout</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("display.layout")}</DropdownMenuLabel>
         <OptionItem
           selected={layout === "list"}
           onSelect={() => onLayoutChange("list")}
         >
-          Diff — one row per item
+          {t("display.diffRows")}
         </OptionItem>
         <OptionItem
           selected={layout === "grid"}
           onSelect={() => onLayoutChange("grid")}
         >
-          Side by side — a column per experiment
+          {t("display.sideBySide")}
         </OptionItem>
         <OptionItem
           selected={layout === "matrix"}
           onSelect={() => onLayoutChange("matrix")}
         >
-          Score matrix — scores as rows, runs as columns
+          {t("display.scoreMatrix")}
         </OptionItem>
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuLabel>Diff</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("display.diff")}</DropdownMenuLabel>
         <OptionItem
           selected={diffMode === "comparison"}
           onSelect={() => onDiffModeChange("comparison")}
         >
-          Comparison → Baseline
+          {t("display.comparisonToBaseline")}
         </OptionItem>
         <OptionItem
           selected={diffMode === "expected"}
           onSelect={() => onDiffModeChange("expected")}
         >
-          Expected → Output
+          {t("display.expectedToOutput")}
         </OptionItem>
         <OptionItem
           selected={diffMode === "off"}
           onSelect={() => onDiffModeChange("off")}
         >
-          Off — values only
+          {t("display.valuesOnly")}
         </OptionItem>
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuLabel>Item Visibility</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("display.itemVisibility")}</DropdownMenuLabel>
         <OptionItem
           selected={itemVisibility === "baseline-only"}
           disabled={isItemVisibilityDisabled}
           onSelect={() => onItemVisibilityChange("baseline-only")}
         >
-          Show only items in baseline
+          {t("display.baselineItemsOnly")}
         </OptionItem>
         <OptionItem
           selected={itemVisibility === "all"}
           disabled={isItemVisibilityDisabled}
           onSelect={() => onItemVisibilityChange("all")}
         >
-          Show all items
+          {t("display.allItems")}
         </OptionItem>
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuLabel>Format</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("display.format")}</DropdownMenuLabel>
         <OptionItem
           selected={ioRenderMode === "json"}
           onSelect={() => onIoRenderModeChange("json")}
@@ -146,7 +148,7 @@ export function ExperimentDisplaySettings({
           selected={ioRenderMode === "text"}
           onSelect={() => onIoRenderModeChange("text")}
         >
-          Formatted
+          {t("display.formatted")}
         </OptionItem>
       </DropdownMenuContent>
     </DropdownMenu>

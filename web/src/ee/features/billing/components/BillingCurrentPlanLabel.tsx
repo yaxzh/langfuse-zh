@@ -3,8 +3,10 @@
 import { buildLocalIsoDatePresentation } from "@/src/utils/dates";
 
 import { useBillingInformation } from "@/src/ee/features/billing/components/useBillingInformation";
+import { useTranslations } from "next-intl";
 
 export const BillingCurrentPlanLabel = () => {
+  const t = useTranslations("settingsEnterprise.billing.plan");
   const { planLabel, cancellation } = useBillingInformation();
   const preparedCancellationDate = buildLocalIsoDatePresentation({
     date: cancellation?.date,
@@ -13,14 +15,16 @@ export const BillingCurrentPlanLabel = () => {
 
   return (
     <div>
-      <>Current plan: {planLabel} </>
+      <>{t("current", { plan: planLabel })} </>
       {cancellation?.isCancelled && preparedCancellationDate && (
         <>
-          <span>(will end on </span>
-          <span title={preparedCancellationDate.title}>
-            {preparedCancellationDate.display}
-          </span>
-          <span>)</span>
+          {t.rich("endsOn", {
+            date: () => (
+              <span title={preparedCancellationDate.title}>
+                {preparedCancellationDate.display}
+              </span>
+            ),
+          })}
         </>
       )}
     </div>

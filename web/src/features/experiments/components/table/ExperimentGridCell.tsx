@@ -48,6 +48,7 @@ import Link from "next/link";
 import { ScoreTag, type ScoreLevel } from "@/src/components/score-tag";
 import { NotRecordedMetric } from "./NotRecordedMetric";
 import { describeRunComparison } from "@/src/features/experiments/fns/describeRunComparison";
+import { useTranslations } from "next-intl";
 
 type ExperimentGridCellProps = {
   projectId: string;
@@ -119,6 +120,7 @@ const ScoreCommentPeek = ({
   executionTraceId?: string | null;
   projectId: string;
 }) => {
+  const t = useTranslations("evaluationAnalytics.experiments");
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -134,7 +136,7 @@ const ScoreCommentPeek = ({
         <button
           type="button"
           className="inline-flex cursor-pointer"
-          aria-label="View score comment"
+          aria-label={t("grid.viewScoreComment")}
         >
           <MessageCircleMore size={12} className="text-muted-foreground" />
         </button>
@@ -151,7 +153,7 @@ const ScoreCommentPeek = ({
             variant="ghost"
             size="icon-xs"
             className="hover:bg-accent rounded p-1"
-            aria-label={copied ? "Copied" : "Copy to clipboard"}
+            aria-label={copied ? t("grid.copied") : t("grid.copyToClipboard")}
           >
             {copied ? (
               <Check className="h-3 w-3" />
@@ -171,7 +173,7 @@ const ScoreCommentPeek = ({
               onClick={(event) => event.stopPropagation()}
             >
               <ExternalLink className="h-3 w-3" />
-              View execution trace
+              {t("grid.viewExecutionTrace")}
             </Link>
           )}
         </div>
@@ -269,6 +271,7 @@ const ScoreItem = ({
   level: Extract<ScoreLevel, "observation" | "trace">;
   showScoreLevelLabel: boolean;
 }) => {
+  const t = useTranslations("evaluationAnalytics.experiments");
   // Decompose the key to get name, source, and dataType
   const { name, source, dataType } = decomposeAggregateScoreKey(scoreKey);
 
@@ -310,11 +313,13 @@ const ScoreItem = ({
           >
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Source:</span>
+                <span className="text-muted-foreground">
+                  {t("grid.source")}:
+                </span>
                 <span className="capitalize">{source.toLowerCase()}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Type:</span>
+                <span className="text-muted-foreground">{t("grid.type")}:</span>
                 <span className="capitalize">{dataType.toLowerCase()}</span>
               </div>
               {/* The side-by-side layout has no score column headers, so the
@@ -695,6 +700,7 @@ export const ExperimentGridCell = ({
   markerClassName,
   showScoreLevelLabels,
 }: ExperimentGridCellProps) => {
+  const t = useTranslations("evaluationAnalytics.experiments");
   const scoreDiffs = useMemo(
     () =>
       !showDiff || isBaseline || !baselineScores
@@ -773,7 +779,7 @@ export const ExperimentGridCell = ({
       // Output section
       {
         accessorKey: "output",
-        header: "Output",
+        header: t("table.output"),
         cell: ({ data }) =>
           data.isLoading ? (
             <ConnectedIOTableCell
@@ -793,7 +799,7 @@ export const ExperimentGridCell = ({
       // follows the list-view columns.
       {
         accessorKey: "scores",
-        header: "Scores",
+        header: t("grid.scores"),
         children: [
           ...(columnVisibility.observationScores !== false
             ? orderedObservationKeys.map((key) =>
@@ -830,6 +836,7 @@ export const ExperimentGridCell = ({
       orderedTraceKeys,
       showScoreLevelLabels,
       singleLine,
+      t,
     ],
   );
 
@@ -934,9 +941,10 @@ export const ExperimentGridCell = ({
  * Empty cell component for when there's no data for an experiment.
  */
 export const ExperimentGridCellEmpty = () => {
+  const t = useTranslations("evaluationAnalytics.experiments");
   return (
     <div className="flex h-full w-full min-w-0 items-start justify-start p-2">
-      <span className="text-muted-foreground text-xs">No data</span>
+      <span className="text-muted-foreground text-xs">{t("grid.noData")}</span>
     </div>
   );
 };

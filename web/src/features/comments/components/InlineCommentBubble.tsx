@@ -6,6 +6,7 @@
 
 import { Button } from "@/src/components/ui/button";
 import { MessageSquarePlus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface InlineCommentBubbleProps {
   onAddComment: () => void;
@@ -16,6 +17,7 @@ export function InlineCommentBubble({
   onAddComment,
   positionRect,
 }: InlineCommentBubbleProps) {
+  const t = useTranslations("remainderUi.comments");
   const handleClick = () => {
     onAddComment();
   };
@@ -38,7 +40,7 @@ export function InlineCommentBubble({
         className="border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground border px-3 py-2.5 shadow-md"
       >
         <MessageSquarePlus className="h-3 w-3" />
-        <span className="ml-1">Comment</span>
+        <span className="ml-1">{t("comment")}</span>
       </Button>
     </div>
   );

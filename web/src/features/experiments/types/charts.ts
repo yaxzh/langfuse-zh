@@ -2,7 +2,7 @@
 export type MetricOption = {
   id: string;
   label: string;
-  group: "Base Metrics" | "Scores";
+  group: "base" | "scores";
   /**
    * The level the score was recorded at, absent on base metrics. Presentation
    * only: the metric still resolves to one level to plot, but the dropdown

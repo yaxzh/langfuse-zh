@@ -46,7 +46,7 @@ export function pickDefaultStripMetric(
   options: MetricOption[],
   scoreCoverage?: ScoreCoverageByLevel,
 ): string {
-  const scores = options.filter((option) => option.group !== "Base Metrics");
+  const scores = options.filter((option) => option.group === "scores");
 
   const coverageOf = (option: MetricOption): number =>
     option.level

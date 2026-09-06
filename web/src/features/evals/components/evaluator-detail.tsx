@@ -17,6 +17,7 @@ import {
 import { useLazyEvaluatorExecutionCounts } from "@/src/features/evals/hooks/useLazyEvaluatorExecutionCounts";
 import { Alert } from "@/src/components/design-system/Alert/Alert";
 import { AlertTriangle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 const JobExecutionCounts = ({
   isLoading,
@@ -34,6 +35,7 @@ const JobExecutionCounts = ({
 };
 
 export const EvaluatorDetail = () => {
+  const t = useTranslations("evaluationAnalytics.evaluations");
   const router = useRouter();
   const projectId = router.query.projectId as string;
   const evaluatorId = router.query.evaluatorId as string;
@@ -77,11 +79,11 @@ export const EvaluatorDetail = () => {
     allTemplates.isLoading ||
     !allTemplates.data
   ) {
-    return <div className="p-3">Loading...</div>;
+    return <div className="p-3">{t("detail.loading")}</div>;
   }
 
   if (evaluator.data && evaluator.data.evalTemplate === null) {
-    return <div>Evaluator not found</div>;
+    return <div>{t("detail.evaluatorNotFound")}</div>;
   }
 
   const existingEvaluator =
@@ -102,11 +104,11 @@ export const EvaluatorDetail = () => {
       headerProps={{
         title: evaluator.data
           ? `${evaluator.data.scoreName}: ${evaluator.data.id}`
-          : "Loading...",
+          : t("detail.loading"),
         itemType: "EVALUATOR",
         breadcrumb: [
           {
-            name: "LLM-as-a-Judge Evaluators",
+            name: t("detail.llmAsJudgeEvaluators"),
             href: `/project/${router.query.projectId as string}/evals/legacy`,
           },
         ],
@@ -142,11 +144,9 @@ export const EvaluatorDetail = () => {
           {filterValidation && !filterValidation.isValid && (
             <div className="mx-3 mt-3">
               <Alert variant="destructive" icon={AlertTriangle}>
-                <Alert.Title>Unsupported filters</Alert.Title>
+                <Alert.Title>{t("detail.unsupportedFilters")}</Alert.Title>
                 <Alert.Description>
-                  This evaluator contains deprecated or unsupported filters. The
-                  filters must be removed. Until the filters are removed, the
-                  evaluator is paused and will not be run.{" "}
+                  {t("detail.unsupportedFiltersDescription")}
                 </Alert.Description>
               </Alert>
             </div>

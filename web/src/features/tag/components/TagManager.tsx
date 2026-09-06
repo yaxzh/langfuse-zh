@@ -16,6 +16,7 @@ import { Label } from "@/src/components/ui/label";
 
 type TagManagerProps = {
   itemName: "prompt" | "trace" | "alert";
+  label?: string;
   tags: string[];
   allTags: string[];
   hasAccess: boolean;
@@ -30,6 +31,7 @@ type TagManagerProps = {
 
 const TagManager = ({
   itemName,
+  label,
   tags,
   allTags,
   hasAccess,
@@ -148,7 +150,9 @@ const TagManager = ({
           }
         }}
       >
-        <Label className="text-base capitalize">{itemName} Tags</Label>
+        <Label className="text-base capitalize">
+          {label ?? `${itemName} Tags`}
+        </Label>
         <Command
           shouldFilter={false} // we do not use cmdk's filter feature as it does not support virtualization for large lists
         >

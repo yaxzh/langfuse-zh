@@ -12,6 +12,7 @@ import { SettingsTableCard } from "@/src/components/layouts/settings-table-card"
 import { BatchExportTableButton } from "@/src/components/BatchExportTableButton";
 import { BatchExportTableName } from "@langfuse/shared";
 import { createTextTableColumn } from "@/src/components/design-system/table/columns/createTextTableColumn";
+import { useTranslations } from "next-intl";
 
 // Both endpoints return the same shape
 type AuditLogRow = RouterOutputs["auditLogs"]["all"]["data"][number];
@@ -21,6 +22,7 @@ type AuditLogsTableProps =
   | { scope: "organization"; orgId: string };
 
 export function AuditLogsTable(props: AuditLogsTableProps) {
+  const t = useTranslations("settingsEnterprise.auditLogs");
   const [paginationState, setPaginationState] = useQueryParams({
     pageIndex: withDefault(NumberParam, 0),
     pageSize: withDefault(NumberParam, 50),
@@ -53,7 +55,7 @@ export function AuditLogsTable(props: AuditLogsTableProps) {
   const columns: LangfuseColumnDef<AuditLogRow>[] = [
     {
       accessorKey: "createdAt",
-      header: "Time",
+      header: t("time"),
       cell: (row) => {
         const date = row.getValue() as Date;
         return date.toLocaleString();
@@ -61,9 +63,9 @@ export function AuditLogsTable(props: AuditLogsTableProps) {
     },
     {
       accessorKey: "actor",
-      header: "Actor",
+      header: t("actor"),
       headerTooltip: {
-        description: "The actor within Langfuse who performed the action.",
+        description: t("actorDescription"),
       },
       cell: (row) => {
         const actor = row.getValue() as AuditLogRow["actor"];
@@ -74,7 +76,7 @@ export function AuditLogsTable(props: AuditLogsTableProps) {
               <Avatar
                 size="sm"
                 src={user?.image ?? undefined}
-                displayName={user?.name ?? user?.email ?? "User"}
+                displayName={user?.name ?? user?.email ?? t("userAlt")}
               />
               <span
                 className={cn(
@@ -102,26 +104,26 @@ export function AuditLogsTable(props: AuditLogsTableProps) {
     },
     createTextTableColumn<AuditLogRow>({
       accessorKey: "resourceType",
-      header: "Resource Type",
+      header: t("resourceType"),
     }),
     createTextTableColumn<AuditLogRow>({
       accessorKey: "resourceId",
-      header: "Resource ID",
+      header: t("resourceId"),
     }),
     createTextTableColumn<AuditLogRow>({
       accessorKey: "action",
-      header: "Action",
+      header: t("action"),
     }),
     createIOTableColumn<AuditLogRow>({
       accessorKey: "before",
-      header: "Before",
+      header: t("before"),
       size: 300,
       getCell: (value) => value || undefined,
       singleLine: rowHeight === "s",
     }),
     createIOTableColumn<AuditLogRow>({
       accessorKey: "after",
-      header: "After",
+      header: t("after"),
       size: 300,
       getCell: (value) => value || undefined,
       singleLine: rowHeight === "s",

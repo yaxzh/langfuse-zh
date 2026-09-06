@@ -3,7 +3,6 @@ import { DropdownMenuItem } from "@/src/components/ui/dropdown-menu";
 import { Edit, Trash2 } from "lucide-react";
 import { api } from "@/src/utils/api";
 import { useHasOrganizationAccess } from "@/src/features/rbac";
-import { formatDistanceToNow } from "date-fns";
 import { SpendAlertDialog } from "./SpendAlertDialog";
 import { DeleteSpendAlertDialog } from "./DeleteSpendAlertDialog";
 import { DataTable } from "@/src/components/table/data-table";
@@ -14,6 +13,7 @@ import { createNumberTableColumn } from "@/src/components/design-system/table/co
 import { createStatusTableColumn } from "@/src/components/design-system/table/columns/createStatusTableColumn";
 import { createTextTableColumn } from "@/src/components/design-system/table/columns/createTextTableColumn";
 import { costFormatter } from "@/src/utils/numbers";
+import { useFormatter, useTranslations } from "next-intl";
 
 interface SpendAlertsTableProps {
   orgId: string;
@@ -28,6 +28,8 @@ type AlertRow = {
 };
 
 export function SpendAlertsTable({ orgId }: SpendAlertsTableProps) {
+  const t = useTranslations("settingsEnterprise.billing");
+  const format = useFormatter();
   const [editingAlert, setEditingAlert] = useState<string | null>(null);
   const [deletingAlert, setDeletingAlert] = useState<string | null>(null);
 
@@ -70,20 +72,20 @@ export function SpendAlertsTable({ orgId }: SpendAlertsTableProps) {
   const columns: LangfuseColumnDef<AlertRow>[] = [
     createTextTableColumn<AlertRow>({
       accessorKey: "title",
-      header: "Title",
+      header: t("spendAlerts.tableTitle"),
       size: 160,
     }),
     createNumberTableColumn<AlertRow>({
       accessorFn: (row) => row.threshold,
       id: "limit",
-      header: "Limit (USD)",
+      header: t("spendAlerts.limitUsd"),
       size: 140,
       formatter: costFormatter,
     }),
     createStatusTableColumn<AlertRow, Date>({
       id: "status",
       accessorFn: (row) => row.triggeredAt,
-      header: "Status",
+      header: t("common.status"),
       size: 110,
       isLive: false,
       getStatus: (triggeredAt) => (triggeredAt ? "triggered" : "active"),
@@ -91,33 +93,31 @@ export function SpendAlertsTable({ orgId }: SpendAlertsTableProps) {
     {
       accessorKey: "lastTriggered",
       id: "lastTriggered",
-      header: "Last Triggered",
+      header: t("spendAlerts.lastTriggered"),
       size: 160,
       cell: ({ row }) =>
         row.original.triggeredAt
-          ? formatDistanceToNow(new Date(row.original.triggeredAt), {
-              addSuffix: true,
-            })
-          : "Never",
+          ? format.relativeTime(new Date(row.original.triggeredAt))
+          : t("spendAlerts.never"),
     },
     createDropdownTableColumn<AlertRow, string>({
       id: "actions",
       accessorFn: (row) => row.id,
-      header: "Actions",
+      header: t("common.actions"),
       size: 120,
       renderMenu: (id) =>
         id ? (
           <>
             <DropdownMenuItem onClick={() => setEditingAlert(id)}>
               <Edit className="mr-2 h-4 w-4" />
-              Edit
+              {t("spendAlerts.edit")}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => setDeletingAlert(id)}
               className="text-destructive"
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              {t("spendAlerts.delete")}
             </DropdownMenuItem>
           </>
         ) : null,

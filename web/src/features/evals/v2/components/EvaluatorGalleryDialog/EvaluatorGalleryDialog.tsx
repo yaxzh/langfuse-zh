@@ -15,6 +15,7 @@ import { EVALUATOR_GALLERY_ALL_SECTION_KEY } from "@/src/features/evals/v2/const
 import { usePostHogClientCapture } from "@/src/features/posthog-analytics";
 import { getEvaluatorCreationAnalyticsProperties } from "@/src/features/evals/v2/fns/evaluators/getEvaluatorCreationAnalyticsProperties";
 import { api } from "@/src/utils/api";
+import { useTranslations } from "next-intl";
 
 export function EvaluatorGalleryDialog({
   projectId,
@@ -29,6 +30,7 @@ export function EvaluatorGalleryDialog({
   onSelectTemplate: (template: GalleryTemplate) => void;
   onCreateFromScratch: (type: EvalTemplateType) => void;
 }) {
+  const t = useTranslations("evaluationAnalytics.evaluations");
   const capture = usePostHogClientCapture();
   const [search, setSearch] = useState("");
   const [activeSection, setActiveSection] = useState<string>(
@@ -75,6 +77,8 @@ export function EvaluatorGalleryDialog({
     customTemplateCount:
       projectEvaluators.data?.pages[0]?.totalItems ?? customTemplates.length,
     search,
+    projectSectionLabel: t("gallery.yourTemplates"),
+    projectSectionDescription: t("gallery.yourTemplatesDescription"),
   });
   const selectSection = (key: string) => {
     setActiveSection(key);
@@ -126,10 +130,9 @@ export function EvaluatorGalleryDialog({
         }}
       >
         <DialogHeader className="[&>div]:items-start [&>div>button]:-mt-1 [&>div>button]:-mr-2 [&>div>button]:flex [&>div>button]:size-8 [&>div>button]:items-center [&>div>button]:justify-center">
-          <DialogTitle>Add an evaluator</DialogTitle>
+          <DialogTitle>{t("gallery.dialogTitle")}</DialogTitle>
           <DialogDescription>
-            Pick a template to start from or create a new evaluator from
-            scratch.
+            {t("gallery.dialogDescription")}
           </DialogDescription>
         </DialogHeader>
         <EvaluatorGalleryView

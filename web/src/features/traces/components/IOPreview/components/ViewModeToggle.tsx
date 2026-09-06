@@ -6,6 +6,7 @@ import {
 } from "@/src/components/ui/hover-card";
 import { Switch } from "@/src/components/design-system/Switch/Switch";
 import { useJsonBetaToggle } from "@/src/features/traces/hooks/useJsonBetaToggle";
+import { useTranslations } from "next-intl";
 
 export type ViewMode = "pretty" | "pretty-beta" | "json" | "json-beta";
 
@@ -27,6 +28,7 @@ export function ViewModeToggle({
   showPrettyBeta = false,
   prettyBetaDisabled = false,
 }: ViewModeToggleProps) {
+  const t = useTranslations("coreObservability.ioPreview");
   const {
     jsonBetaEnabled,
     selectedViewTab,
@@ -70,7 +72,7 @@ export function ViewModeToggle({
                   label="Normalized (beta)"
                 />
               ))}
-            <Tabs.Trigger value="pretty" size="sm" label="Formatted" />
+            <Tabs.Trigger value="pretty" size="sm" label={t("formatted")} />
             <Tabs.Trigger value="json" size="sm" label="JSON" />
           </Tabs.List>
         </Tabs>
@@ -82,7 +84,7 @@ export function ViewModeToggle({
             checked={jsonBetaEnabled}
             onCheckedChange={handleBetaToggle}
           />
-          <span className="text-muted-foreground text-xs">Beta</span>
+          <span className="text-muted-foreground text-xs">{t("beta")}</span>
         </div>
       )}
     </div>

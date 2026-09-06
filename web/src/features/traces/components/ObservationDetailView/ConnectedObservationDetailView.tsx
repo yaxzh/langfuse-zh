@@ -66,6 +66,7 @@ import { useHasProjectAccess } from "@/src/features/rbac";
 import { useSession } from "next-auth/react";
 import useIsFeatureEnabled from "@/src/features/feature-flags/hooks/useIsFeatureEnabled";
 import { ObservationPreview } from "./ObservationPreview";
+import { useTranslations } from "next-intl";
 
 export interface ConnectedObservationDetailViewProps {
   observation: ObservationReturnTypeWithMetadata;
@@ -78,6 +79,7 @@ export function ConnectedObservationDetailView({
   projectId,
   traceId,
 }: ConnectedObservationDetailViewProps) {
+  const t = useTranslations("coreObservability.traceDetail");
   // Tab and view state from URL (via SelectionContext)
   const {
     selectedTab: globalSelectedTab,
@@ -349,20 +351,22 @@ export function ConnectedObservationDetailView({
         {showTabsBar && (
           <TooltipProvider>
             <TabsBarList>
-              <TabsBarTrigger value="preview">Preview</TabsBarTrigger>
+              <TabsBarTrigger value="preview">{t("preview")}</TabsBarTrigger>
               {showScoresTab ? (
-                <TabsBarTrigger value="scores">Scores</TabsBarTrigger>
+                <TabsBarTrigger value="scores">{t("scores")}</TabsBarTrigger>
               ) : null}
               {showLogViewTab ? (
                 <TabsBarTrigger value="log">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span>Log View</span>
+                      <span>{t("logView")}</span>
                     </TooltipTrigger>
                     <TooltipContent className="text-xs">
                       {isLogViewVirtualized
-                        ? `Shows all ${observations.length} observations with virtualization enabled.`
-                        : "Shows all observations concatenated. Great for quickly scanning through them."}
+                        ? t("virtualizedLogView", {
+                            count: observations.length,
+                          })
+                        : t("standardLogView")}
                     </TooltipContent>
                   </Tooltip>
                 </TabsBarTrigger>
@@ -404,7 +408,7 @@ export function ConnectedObservationDetailView({
                         <Tabs.Trigger
                           value="pretty"
                           size="sm"
-                          label="Formatted"
+                          label={t("formatted")}
                         />
                         {selectedTab === "log" && isLogViewVirtualized ? (
                           <HoverCard openDelay={200}>
@@ -449,7 +453,7 @@ export function ConnectedObservationDetailView({
                           onCheckedChange={handleBetaToggle}
                         />
                         <span className="text-muted-foreground text-xs">
-                          Beta
+                          {t("beta")}
                         </span>
                       </div>
                     )}

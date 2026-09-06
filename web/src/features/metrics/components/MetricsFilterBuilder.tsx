@@ -1,5 +1,5 @@
-import { startCase } from "lodash";
 import { AlertCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   type ColumnDefinition,
@@ -254,6 +254,7 @@ const MetricsFilterView = ({
   filters: FilterState;
   onChange: (filters: FilterState) => void;
 }) => {
+  const t = useTranslations("systemUi.widgetExtras");
   const editorFilters = viewFiltersToEditorFilters(view, filters);
   const renderable = editorFilters.filter((filter) =>
     resolvesToColumn(filter, columns),
@@ -265,14 +266,15 @@ const MetricsFilterView = ({
         .map((filter) => displayNameForFilterColumn(filter.column)),
     ),
   ).join(", ");
-
   return (
     <div className="space-y-2">
       {unsupportedColumns.length > 0 && (
         <Alert variant="warning" icon={AlertCircle}>
-          <Alert.Title>Unsupported filters</Alert.Title>
+          <Alert.Title>{t("unsupportedFiltersTitle")}</Alert.Title>
           <Alert.Description>
-            {`These filter columns are not supported for ${startCase(view)} and were dropped: ${unsupportedColumns}. Switch back to a compatible view to restore them.`}
+            {t("unsupportedFiltersDescription", {
+              columns: unsupportedColumns,
+            })}
           </Alert.Description>
         </Alert>
       )}

@@ -24,8 +24,10 @@ import {
   type ExperimentDiffMode,
   type ExperimentResultsLayout,
 } from "@/src/features/experiments/hooks/useExperimentResultsState";
+import { useTranslations } from "next-intl";
 
 export default function ExperimentResults() {
+  const t = useTranslations("evaluationAnalytics.experiments");
   const router = useRouter();
   const projectId = router.query.projectId as string;
 
@@ -116,7 +118,7 @@ export default function ExperimentResults() {
   // Show spinner while session loads or while redirecting when beta is off
   if (!isExperimentsBetaActive) {
     return (
-      <Page headerProps={{ title: "Experiments" }}>
+      <Page headerProps={{ title: t("pages.experiments") }}>
         <div className="flex h-full items-center justify-center">
           <Spinner size="xl" variant="muted" />
         </div>
@@ -130,7 +132,10 @@ export default function ExperimentResults() {
         title: "",
         itemType: "EXPERIMENT",
         breadcrumb: [
-          { name: "Experiments", href: `/project/${projectId}/experiments` },
+          {
+            name: t("pages.experiments"),
+            href: `/project/${projectId}/experiments`,
+          },
         ],
         actionButtonsLeft: (
           <ExperimentSelectionControls

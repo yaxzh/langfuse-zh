@@ -8,7 +8,14 @@ import {
   FormMessage,
 } from "@/src/components/ui/form";
 import { Input } from "@/src/components/ui/input";
-import { signupSchema } from "@/src/features/auth/lib/signupSchema";
+import {
+  createNameSchema,
+  createSignupSchema,
+} from "@/src/features/auth/lib/signupSchema";
+import {
+  isSignupErrorCode,
+  type SignupErrorCode,
+} from "@/src/features/auth-credentials/lib/signupErrors";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import Head from "next/head";
@@ -33,8 +40,9 @@ import { getSafeRedirectPath } from "@/src/utils/redirect";
 import { captureUnknownError } from "@/src/utils/captureUnknownError";
 import { usePostHogClientCapture } from "@/src/features/posthog-analytics/usePostHogClientCapture";
 import useLocalStorage from "@/src/components/useLocalStorage";
-import { noUrlCheck, StringNoHTMLNonEmpty } from "@langfuse/shared";
 import { PASSWORD_SETUP_EMAIL_STORAGE_KEY } from "@/src/features/auth-credentials/lib/credentialsUtils";
+import { AuthLanguageSwitcher } from "@/src/features/i18n/AuthLanguageSwitcher";
+import { useTranslations } from "next-intl";
 
 // Use the same getServerSideProps function as src/pages/auth/sign-in.tsx
 export { getServerSideProps } from "@/src/pages/auth/sign-in";
@@ -42,14 +50,43 @@ export { getServerSideProps } from "@/src/pages/auth/sign-in";
 type NextAuthProvider = NonNullable<Parameters<typeof signIn>[0]>;
 
 // Schema for the verified signup flow (email + name only, no password)
-const signupVerifyFormSchema = z.object({
-  name: StringNoHTMLNonEmpty.refine((value) => noUrlCheck(value), {
-    message: "Input should not contain a URL",
-  }).refine((value) => /^[a-zA-Z0-9\s]+$/.test(value), {
-    message: "Name can only contain letters, numbers, and spaces",
-  }),
-  email: z.email(),
-});
+const createSignupVerifyFormSchema = (
+  invalidEmail: string,
+  nameMessages: Parameters<typeof createNameSchema>[0],
+) =>
+  z.object({
+    name: createNameSchema(nameMessages),
+    email: z.email({ error: invalidEmail }),
+  });
+
+const signupErrorMessageKeys = {
+  SIGNUP_DISABLED: "signUp.errors.signupDisabled",
+  PASSWORD_SIGNUP_DISABLED: "signUp.errors.passwordSignupDisabled",
+  DOMAIN_SSO_REQUIRED: "signUp.errors.domainSsoRequired",
+  ENTERPRISE_SSO_REQUIRED: "signUp.errors.enterpriseSsoRequired",
+  ACCOUNT_EXISTS: "signUp.errors.accountExists",
+  IDENTITY_PROVIDER_ACCOUNT_EXISTS:
+    "signUp.errors.identityProviderAccountExists",
+  EMAIL_VERIFICATION_REQUIRED: "signUp.errors.emailVerificationRequired",
+} as const satisfies Record<SignupErrorCode, string>;
+
+async function getSignupErrorMessageKey(response: Response) {
+  try {
+    const body: unknown = await response.json();
+    if (
+      typeof body === "object" &&
+      body !== null &&
+      "code" in body &&
+      isSignupErrorCode(body.code)
+    ) {
+      return signupErrorMessageKeys[body.code];
+    }
+  } catch {
+    // The generic message below also covers malformed and non-JSON responses.
+  }
+
+  return "signUp.failed" as const;
+}
 
 export default function SignUp({
   authProviders = FALLBACK_AUTH_PROVIDERS,
@@ -78,6 +115,7 @@ export default function SignUp({
 function StandardSignupFlow({
   authProviders,
 }: Pick<PageProps, "authProviders" | "emailVerificationRequired">) {
+  const t = useTranslations("auth");
   const { isLangfuseCloud } = useLangfuseCloudRegion();
   const router = useRouter();
   const capture = usePostHogClientCapture();
@@ -105,6 +143,16 @@ function StandardSignupFlow({
       null,
     );
 
+  const signupSchema = createSignupSchema({
+    invalidEmail: t("common.invalidEmail"),
+    passwordMin: t("common.passwordMin"),
+    passwordSecure: t("common.passwordSecure"),
+    nameMaxLength: t("signUp.validation.nameMaxLength"),
+    nameRequired: t("signUp.validation.nameRequired"),
+    nameNoHtml: t("signUp.validation.nameNoHtml"),
+    nameNoUrl: t("signUp.validation.nameNoUrl"),
+    nameFormat: t("signUp.validation.nameFormat"),
+  });
   const form = useForm({
     resolver: showPasswordStep ? zodResolver(signupSchema) : undefined,
     defaultValues: {
@@ -136,7 +184,7 @@ function StandardSignupFlow({
 
     if (!emailResult.success) {
       form.setError("email", {
-        message: "Invalid email address",
+        message: t("common.invalidEmail"),
       });
       setContinueLoading(false);
       return;
@@ -184,7 +232,7 @@ function StandardSignupFlow({
       }, 100);
     } catch (error) {
       captureUnknownError("auth.signUp.checkSso", error);
-      setFormError("Unable to check SSO configuration. Please try again.");
+      setFormError(t("signIn.ssoCheckFailed"));
     } finally {
       setContinueLoading(false);
     }
@@ -203,8 +251,7 @@ function StandardSignupFlow({
       );
 
       if (!res.ok) {
-        const payload = (await res.json()) as { message: string };
-        setFormError(payload.message);
+        setFormError(t(await getSignupErrorMessageKey(res)));
         return;
       }
 
@@ -218,7 +265,7 @@ function StandardSignupFlow({
             : `${env.NEXT_PUBLIC_BASE_PATH ?? ""}/`),
       });
     } catch {
-      setFormError("An error occurred. Please try again.");
+      setFormError(t("signUp.failed"));
     }
   }
 
@@ -242,9 +289,12 @@ function StandardSignupFlow({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>{t("common.name")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Jane Doe" {...field} />
+                    <Input
+                      placeholder={t("common.namePlaceholder")}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -256,7 +306,7 @@ function StandardSignupFlow({
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>{t("common.email")}</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="jsdoe@example.com"
@@ -275,7 +325,7 @@ function StandardSignupFlow({
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>{t("common.password")}</FormLabel>
                   <FormControl>
                     <PasswordInput {...field} />
                   </FormControl>
@@ -293,7 +343,7 @@ function StandardSignupFlow({
             disabled={showPasswordStep ? false : form.watch("email") === ""}
             data-testid="submit-email-password-sign-up-form"
           >
-            {showPasswordStep ? "Sign up" : "Continue"}
+            {showPasswordStep ? t("signUp.submit") : t("common.continue")}
           </Button>
           {formError ? (
             <div className="text-destructive text-center text-sm font-bold">
@@ -304,7 +354,7 @@ function StandardSignupFlow({
       </Form>
       <SSOButtons
         authProviders={authProviders}
-        action="sign up"
+        action={t("signUp.providerAction")}
         lastUsedMethod={lastUsedAuthMethod}
         onProviderSelect={setLastUsedAuthMethod}
       />
@@ -316,6 +366,7 @@ function StandardSignupFlow({
 function VerifiedSignupFlow({
   authProviders,
 }: Pick<PageProps, "authProviders" | "emailVerificationRequired">) {
+  const t = useTranslations("auth");
   const router = useRouter();
   const capture = usePostHogClientCapture();
   const emailParam = router.query.email as string | undefined;
@@ -327,6 +378,16 @@ function VerifiedSignupFlow({
       null,
     );
 
+  const signupVerifyFormSchema = createSignupVerifyFormSchema(
+    t("common.invalidEmail"),
+    {
+      nameNoUrl: t("signUp.validation.nameNoUrl"),
+      nameFormat: t("signUp.validation.nameFormat"),
+      nameRequired: t("signUp.validation.nameRequired"),
+      nameNoHtml: t("signUp.validation.nameNoHtml"),
+      nameMaxLength: t("signUp.validation.nameMaxLength"),
+    },
+  );
   const form = useForm({
     resolver: zodResolver(signupVerifyFormSchema),
     defaultValues: {
@@ -352,8 +413,7 @@ function VerifiedSignupFlow({
       );
 
       if (!res.ok) {
-        const payload = (await res.json()) as { message: string };
-        setFormError(payload.message);
+        setFormError(t(await getSignupErrorMessageKey(res)));
         return;
       }
 
@@ -367,8 +427,8 @@ function VerifiedSignupFlow({
       if (signInRes?.error) {
         setFormError(
           signInRes.error === "AccessDenied"
-            ? "Unable to send verification email. Please try again."
-            : signInRes.error,
+            ? t("signUp.verificationEmailFailed")
+            : t("signUp.failed"),
         );
         return;
       }
@@ -380,7 +440,7 @@ function VerifiedSignupFlow({
       );
       await router.push("/auth/setup-password");
     } catch {
-      setFormError("An error occurred. Please try again.");
+      setFormError(t("signUp.failed"));
     }
   }
 
@@ -396,9 +456,9 @@ function VerifiedSignupFlow({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Name</FormLabel>
+                <FormLabel>{t("common.name")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Jane Doe" {...field} />
+                  <Input placeholder={t("common.namePlaceholder")} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -409,7 +469,7 @@ function VerifiedSignupFlow({
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>{t("common.email")}</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="jsdoe@example.com"
@@ -428,7 +488,7 @@ function VerifiedSignupFlow({
             loading={form.formState.isSubmitting}
             data-testid="submit-email-password-sign-up-form"
           >
-            Continue
+            {t("common.continue")}
           </Button>
           {formError ? (
             <div className="text-destructive text-center text-sm font-bold">
@@ -439,7 +499,7 @@ function VerifiedSignupFlow({
       </Form>
       <SSOButtons
         authProviders={authProviders}
-        action="sign up"
+        action={t("signUp.providerAction")}
         lastUsedMethod={lastUsedAuthMethod}
         onProviderSelect={setLastUsedAuthMethod}
       />
@@ -449,30 +509,32 @@ function VerifiedSignupFlow({
 }
 
 function SignupPageShell({ children }: { children: React.ReactNode }) {
+  const t = useTranslations("auth");
   const { isLangfuseCloud } = useLangfuseCloudRegion();
 
   return (
     <>
       <Head>
-        <title>Sign up | Langfuse</title>
+        <title>{t("signUp.pageTitle")} | Langfuse</title>
         <meta
           name="description"
-          content="Create an account, no credit card required."
+          content={t("signUp.metaDescription")}
           key="desc"
         />
       </Head>
+      <AuthLanguageSwitcher />
       <div className="flex flex-1 flex-col py-6 sm:min-h-full sm:justify-center sm:px-6 sm:py-12 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="mx-auto w-fit">
             <LangfuseIcon />
           </div>
           <h2 className="text-primary mt-4 text-center text-2xl leading-9 font-bold tracking-tight">
-            Create new account
+            {t("signUp.title")}
           </h2>
         </div>
         {isLangfuseCloud ? (
           <div className="text-center sm:mx-auto sm:w-full sm:max-w-[480px]">
-            No credit card required.
+            {t("signUp.noCreditCard")}
           </div>
         ) : null}
 
@@ -490,15 +552,16 @@ function SignupPageShell({ children }: { children: React.ReactNode }) {
 }
 
 function SignupFooter() {
+  const t = useTranslations("auth.signUp");
   const router = useRouter();
   return (
     <p className="text-muted-foreground mt-10 text-center text-sm">
-      Already have an account?{" "}
+      {t("alreadyHaveAccount")}{" "}
       <Link
         href={`/auth/sign-in${router.asPath.includes("?") ? router.asPath.substring(router.asPath.indexOf("?")) : ""}`}
         className="text-link hover:text-link-hover leading-6 font-bold"
       >
-        Sign in
+        {t("signIn")}
       </Link>
     </p>
   );

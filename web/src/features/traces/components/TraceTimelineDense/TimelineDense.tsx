@@ -103,6 +103,7 @@ import {
   type RowExtent,
   type Viewport,
 } from "../../fns/timeline/viewport";
+import { useTranslations } from "next-intl";
 
 /** Reuses ItemBadge's type→hue mapping, so a colour means what it already means. */
 const TYPE_COLOR: Record<string, string> = {
@@ -339,6 +340,7 @@ export function TimelineDense({
   metricsOf,
   showDuration = true,
 }: TimelineDenseProps) {
+  const t = useTranslations("coreDetails.traces.timeline");
   const [viewport, setViewport] = useState<Viewport | null>(null);
   const [pointerPos, setPointerPos] = useState<{
     x: number;
@@ -1334,7 +1336,7 @@ export function TimelineDense({
     compression.toRealMs(current.time.start + current.time.duration) -
       compression.toRealMs(current.time.start),
   );
-  const windowHint = `${windowLabel} window`;
+  const windowHint = t("window", { duration: windowLabel });
 
   return (
     <div
@@ -1347,13 +1349,13 @@ export function TimelineDense({
         data-testid="timeline-dense-toolbar"
       >
         <ToolbarButton
-          label="Zoom out"
+          label={t("zoomOut")}
           onClick={() => zoomBy(2 ** -BUTTON_ZOOM_LEVELS, 0.5, 0.5)}
         >
           <Minus className="h-3 w-3" />
         </ToolbarButton>
         <ToolbarButton
-          label="Zoom in"
+          label={t("zoomIn")}
           onClick={() =>
             offerShowLabels
               ? showLabels()
@@ -1371,7 +1373,7 @@ export function TimelineDense({
           </ToolbarButton>
         ) : (
           <ToolbarButton
-            label={fitSpent ? "Whole trace already fits" : "Fit whole trace"}
+            label={fitSpent ? t("alreadyFits") : t("fit")}
             onClick={() => {
               setLabelsPinned(false);
               setOverride(null);
@@ -1582,7 +1584,9 @@ export function TimelineDense({
                         top: `${Math.max((rowHeight - barHeight) / 2, 0)}px`,
                         height: `${barHeight}px`,
                       }}
-                      title={`Outside the time window — starts at ${formatDurationMs(node.startMs)}`}
+                      title={t("outsideWindow", {
+                        start: formatDurationMs(node.startMs),
+                      })}
                       data-testid="timeline-dense-offscreen"
                     />
                   ) : (

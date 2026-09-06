@@ -12,6 +12,7 @@ import {
 } from "@/src/components/ui/tooltip";
 import { showErrorToast, showSuccessToast } from "@/src/features/notifications";
 import { api } from "@/src/utils/api";
+import { useTranslations } from "next-intl";
 
 type WebCalloutTarget = {
   projectId: string;
@@ -21,6 +22,7 @@ type WebCalloutTarget = {
 };
 
 export function useWebCalloutAction(props: WebCalloutTarget, enabled: boolean) {
+  const t = useTranslations("settingsEnterprise.webCalloutAction");
   const endpoint = api.webCallouts.enabled.useQuery(
     { projectId: props.projectId },
     {
@@ -39,7 +41,7 @@ export function useWebCalloutAction(props: WebCalloutTarget, enabled: boolean) {
       });
     },
     onError: (error) => {
-      showErrorToast("Web callout failed", error.message);
+      showErrorToast(t("failed"), error.message);
     },
   });
 
@@ -63,7 +65,7 @@ export function useWebCalloutAction(props: WebCalloutTarget, enabled: boolean) {
   }
 
   return {
-    endpointName: endpoint.data?.name ?? "Web callout",
+    endpointName: endpoint.data?.name ?? t("fallbackName"),
     isLoading: invokeMutation.isPending,
     invokeCallout,
   };
@@ -78,6 +80,8 @@ export function WebCalloutMenuItem({
   action: WebCalloutAction;
   withSeparator?: boolean;
 }) {
+  const t = useTranslations("settingsEnterprise.webCalloutAction");
+
   return (
     <>
       <DropdownMenuItem
@@ -93,8 +97,10 @@ export function WebCalloutMenuItem({
           className="max-w-[260px] min-w-0 truncate"
           title={action.endpointName}
         >
-          <span>Call </span>
-          <span className="font-bold">{action.endpointName}</span>
+          {t.rich("callRich", {
+            endpointName: action.endpointName,
+            strong: (chunks) => <span className="font-bold">{chunks}</span>,
+          })}
         </span>
       </DropdownMenuItem>
       {withSeparator && <DropdownMenuSeparator />}
@@ -115,7 +121,8 @@ export function WebCalloutButton({
    */
   layout?: "toolbar" | "menu";
 }) {
-  const label = `Call ${action.endpointName}`;
+  const t = useTranslations("settingsEnterprise.webCalloutAction");
+  const label = t("call", { endpointName: action.endpointName });
 
   if (layout === "menu") {
     return (

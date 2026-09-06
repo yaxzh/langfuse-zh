@@ -45,6 +45,7 @@ import { TableActionMenu } from "@/src/features/table/components/TableActionMenu
 import { type TableAction } from "@/src/features/table/types";
 import { showSuccessToast } from "@/src/features/notifications";
 import { Pen, Trash } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type DatasetTableRow = {
   id: string;
@@ -106,6 +107,7 @@ function DatasetsMultiSelectActionMenu({
   searchQuery: string | null;
   store: DatasetsTableStore;
 }) {
+  const t = useTranslations("productTables.datasets");
   const selectAll = useStore(store, (state) => state.selectAll);
   const selectedCount = useStore(
     store,
@@ -124,9 +126,8 @@ function DatasetsMultiSelectActionMenu({
   const deleteManyMutation = api.datasets.deleteMany.useMutation({
     onSuccess: () => {
       showSuccessToast({
-        title: "Datasets deleted",
-        description:
-          "Selected datasets will be deleted. Associated run items and media links are cleaned up asynchronously.",
+        title: t("deletedTitle"),
+        description: t("deletedDescription"),
       });
     },
     onSettled: () => {
@@ -140,9 +141,8 @@ function DatasetsMultiSelectActionMenu({
     {
       id: ActionId.DatasetDelete,
       type: BatchActionType.Delete,
-      label: "Delete",
-      description:
-        "This action cannot be undone. Selected folders delete all datasets contained in them.",
+      label: t("actions.delete"),
+      description: t("deleteSelectedDescription"),
       accessCheck: {
         scope: "datasets:CUD",
       },
@@ -203,6 +203,7 @@ function DatasetsTableToolbar({
   totalCount: number | null;
   viewControllers: DatasetTableViewControllers;
 }) {
+  const td = useTranslations("coreDetails.datasets.misc");
   const selectAll = useStore(store, (state) => state.selectAll);
   const selectedPageRowIds = useStore(
     store,
@@ -220,7 +221,7 @@ function DatasetsTableToolbar({
       rowHeight={rowHeight}
       setRowHeight={setRowHeight}
       searchConfig={{
-        metadataSearchFields: ["Name"],
+        metadataSearchFields: [td("name")],
         updateQuery: setSearchQuery,
         currentQuery: searchQuery ?? undefined,
         tableAllowsFullTextSearch: false,
@@ -257,6 +258,8 @@ function DatasetsTableToolbar({
 }
 
 export function DatasetsTable(props: { projectId: string }) {
+  const t = useTranslations("productTables.datasets");
+  const td = useTranslations("coreDetails.datasets.misc");
   const { setDetailPageList } = useDetailPageLists();
   const [rowHeight, setRowHeight] = useRowHeightLocalStorage("datasets", "s");
   const [datasetsTableStore] = useState(() => createDatasetsTableStore());
@@ -320,7 +323,7 @@ export function DatasetsTable(props: { projectId: string }) {
     selectActionColumn,
     createFolderKeyTableColumn<DatasetTableRow, DatasetTableRow["key"]>({
       accessorKey: "key",
-      header: "Name",
+      header: t("columns.name"),
       size: 150,
       isFixedPosition: true,
       getCell: (key, { row }) => {
@@ -346,7 +349,7 @@ export function DatasetsTable(props: { projectId: string }) {
     }),
     createTextTableColumn<DatasetTableRow>({
       accessorKey: "description",
-      header: "Description",
+      header: t("columns.description"),
       enableHiding: true,
       size: 200,
     }),
@@ -366,19 +369,19 @@ export function DatasetsTable(props: { projectId: string }) {
     }),
     createDateTableColumn<DatasetTableRow>({
       accessorKey: "createdAt",
-      header: "Created",
+      header: t("columns.created"),
       enableHiding: true,
       size: 150,
     }),
     createDateTableColumn<DatasetTableRow>({
       accessorKey: "lastRunAt",
-      header: "Last Run",
+      header: t("columns.lastRun"),
       enableHiding: true,
       size: 150,
     }),
     {
       accessorKey: "inputSchema",
-      header: "Input Schema",
+      header: t("columns.inputSchema"),
       id: "inputSchema",
       enableHiding: true,
       size: 80,
@@ -395,7 +398,7 @@ export function DatasetsTable(props: { projectId: string }) {
     },
     {
       accessorKey: "expectedOutputSchema",
-      header: "Expected Output Schema",
+      header: t("columns.expectedOutputSchema"),
       id: "expectedOutputSchema",
       enableHiding: true,
       size: 90,
@@ -415,7 +418,7 @@ export function DatasetsTable(props: { projectId: string }) {
     },
     createIOTableColumn<DatasetTableRow>({
       accessorKey: "metadata",
-      header: "Metadata",
+      header: t("columns.metadata"),
       enableHiding: true,
       size: 300,
       getCell: (value) => value || undefined,
@@ -424,7 +427,7 @@ export function DatasetsTable(props: { projectId: string }) {
     {
       id: "actions",
       accessorKey: "actions",
-      header: "Actions",
+      header: t("columns.actions"),
       size: 70,
       cell: ({ row }) => {
         const key: DatasetTableRow["key"] = row.getValue("key");
@@ -450,8 +453,8 @@ export function DatasetsTable(props: { projectId: string }) {
               {({ disabled, openDialog }) => (
                 <IconOnlyButton
                   icon={<Pen className="h-4 w-4" />}
-                  label="Edit"
-                  aria-label="edit"
+                  label={t("actions.edit")}
+                  aria-label={td("edit")}
                   disabledReason={disabled?.reason}
                   variant="ghost"
                   size="icon-xs"
@@ -471,8 +474,8 @@ export function DatasetsTable(props: { projectId: string }) {
               {({ disabled, openDialog }) => (
                 <IconOnlyButton
                   icon={<Trash className="h-4 w-4" />}
-                  label="Delete"
-                  aria-label="delete"
+                  label={t("actions.delete")}
+                  aria-label={td("delete")}
                   disabledReason={disabled?.reason}
                   variant="ghost"
                   size="icon-xs"

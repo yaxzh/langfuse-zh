@@ -7,37 +7,37 @@ import type { ColumnDefinition, ObservationLevelType } from "@langfuse/shared";
  */
 export const experimentItemsTableCols: ColumnDefinition[] = [
   {
-    name: "Experiment Item ID",
+    name: "id",
     id: "id",
     type: "string",
     internal: "experiment_item_id",
   },
   {
-    name: "Experiment ID",
+    name: "experimentId",
     id: "experimentId",
     type: "string",
     internal: "experiment_id",
   },
   {
-    name: "Trace ID",
+    name: "traceId",
     id: "traceId",
     type: "string",
     internal: "trace_id",
   },
   {
-    name: "Dataset Item ID",
+    name: "datasetItemId",
     id: "datasetItemId",
     type: "string",
     internal: "dataset_item_id",
   },
   {
-    name: "Start Time",
+    name: "startTime",
     id: "startTime",
     type: "datetime",
     internal: "start_time",
   },
   {
-    name: "Status",
+    name: "level",
     id: "level",
     type: "stringOptions",
     internal: "level",
@@ -50,14 +50,14 @@ export const experimentItemsTableCols: ColumnDefinition[] = [
     aliases: ["Level"],
   },
   {
-    name: "Cost ($)",
+    name: "totalCost",
     id: "totalCost",
     type: "number",
     internal: "total_cost",
     nullable: true,
   },
   {
-    name: "Latency (ms)",
+    name: "latencyMs",
     id: "latencyMs",
     type: "number",
     internal: "latency_ms",
@@ -70,14 +70,14 @@ export const experimentItemsTableCols: ColumnDefinition[] = [
   // names are aliases too: a saved view may store a column by its label, and
   // `validateFilters` drops what it cannot resolve.
   {
-    name: "Numeric Scores",
+    name: "scores_avg",
     id: "scores_avg",
     type: "numberObject",
     internal: "scores_avg",
     aliases: ["obs_scores_avg", "Scores (numeric)"],
   },
   {
-    name: "Categorical Scores",
+    name: "score_categories",
     id: "score_categories",
     type: "categoryOptions",
     internal: "score_categories",
@@ -86,7 +86,7 @@ export const experimentItemsTableCols: ColumnDefinition[] = [
     aliases: ["obs_score_categories", "Scores (categorical)"],
   },
   {
-    name: "Boolean Scores",
+    name: "score_booleans",
     id: "score_booleans",
     type: "booleanObject",
     internal: "score_booleans",
@@ -94,35 +94,38 @@ export const experimentItemsTableCols: ColumnDefinition[] = [
     aliases: ["obs_score_booleans", "Scores (boolean)"],
   },
   {
-    name: "Trace Scores (numeric)",
+    name: "trace_scores_avg",
     id: "trace_scores_avg",
     type: "numberObject",
     internal: "trace_scores_avg",
+    aliases: ["Trace Scores (numeric)"],
   },
   {
-    name: "Trace Scores (categorical)",
+    name: "trace_score_categories",
     id: "trace_score_categories",
     type: "categoryOptions",
     internal: "trace_score_categories",
     options: [],
     nullable: true,
+    aliases: ["Trace Scores (categorical)"],
   },
   {
-    name: "Trace Scores (boolean)",
+    name: "trace_score_booleans",
     id: "trace_score_booleans",
     type: "booleanObject",
     internal: "trace_score_booleans",
     nullable: true,
+    aliases: ["Trace Scores (boolean)"],
   },
   {
-    name: "Item Metadata",
+    name: "itemMetadata",
     id: "itemMetadata",
     type: "stringObject",
     internal: "itemMetadata",
     nullable: true,
   },
   {
-    name: "Metadata",
+    name: "eventMetadata",
     id: "eventMetadata",
     type: "stringObject",
     internal: "eventMetadata",
@@ -145,7 +148,7 @@ export const getExperimentItemsColumnName = (id: string): string => {
  * Filter configuration for experiment items table.
  * Defines available sidebar filters and their types.
  */
-export const experimentItemsFilterConfig: FilterConfig = {
+const experimentItemsFilterConfig: FilterConfig = {
   tableName: "experiment-items",
 
   columnDefinitions: experimentItemsTableCols,
@@ -178,3 +181,16 @@ export const experimentItemsFilterConfig: FilterConfig = {
     },
   ],
 };
+
+export const getExperimentItemsFilterConfig = (
+  getLabel: (columnId: string) => string,
+): FilterConfig => ({
+  ...experimentItemsFilterConfig,
+  columnDefinitions: experimentItemsFilterConfig.columnDefinitions.map(
+    (column) => ({ ...column, name: getLabel(column.id) }),
+  ),
+  facets: experimentItemsFilterConfig.facets.map((facet) => ({
+    ...facet,
+    label: getLabel(facet.column),
+  })),
+});

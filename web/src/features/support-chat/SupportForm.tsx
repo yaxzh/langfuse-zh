@@ -13,7 +13,8 @@ import {
   TopicGroups,
   type MessageType,
   type Topic,
-  SupportFormSchema,
+  createSupportFormSchema,
+  type SupportFormSchema,
 } from "./formConstants";
 
 import { reportNonTrpcError } from "@/src/utils/api";
@@ -40,12 +41,13 @@ import {
 } from "@/src/components/ui/alert-dialog";
 import { SelectInput } from "@/src/components/design-system/SelectInput/SelectInput";
 import { Textarea } from "@/src/components/ui/textarea";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Dropzone } from "@/src/components/design-system/Dropzone/Dropzone";
 import { Trash2 } from "lucide-react";
 import { PYLON_MAX_FILE_SIZE_BYTES } from "./pylon/pylonConstants";
 import Spinner from "@/src/components/design-system/Spinner/Spinner";
+import { useTranslations } from "next-intl";
 
 /** Make RHF generics match the resolver (Zod defaults => input can be undefined) */
 type SupportFormInput = z.input<typeof SupportFormSchema>;
@@ -85,7 +87,14 @@ const FILE_UPLOAD_CONSTRAINTS = {
  * Validates files against upload constraints
  * @returns {isValid: boolean, error?: string}
  */
-function validateFiles(files: File[] | undefined): {
+function validateFiles(
+  files: File[] | undefined,
+  messages: {
+    tooMany: (maxFiles: number) => string;
+    tooLarge: (fileName: string, maxMB: string) => string;
+    combinedTooLarge: (totalMB: string, maxMB: string) => string;
+  },
+): {
   isValid: boolean;
   error?: string;
 } {
@@ -100,7 +109,7 @@ function validateFiles(files: File[] | undefined): {
   if (files.length > maxFiles) {
     return {
       isValid: false,
-      error: `Please upload at most ${maxFiles} files.`,
+      error: messages.tooMany(maxFiles),
     };
   }
 
@@ -110,7 +119,7 @@ function validateFiles(files: File[] | undefined): {
     const maxMB = (maxFileSizeBytes / (1024 * 1024)).toFixed(0);
     return {
       isValid: false,
-      error: `File "${oversizedFile.name}" is too large. Maximum file size is ${maxMB}MB per file.`,
+      error: messages.tooLarge(oversizedFile.name, maxMB),
     };
   }
 
@@ -121,7 +130,7 @@ function validateFiles(files: File[] | undefined): {
     const maxMB = (maxCombinedBytes / (1024 * 1024)).toFixed(0);
     return {
       isValid: false,
-      error: `Total attachment size (${totalMB}MB) exceeds the limit of ${maxMB}MB.`,
+      error: messages.combinedTooLarge(totalMB, maxMB),
     };
   }
 
@@ -131,7 +140,16 @@ function validateFiles(files: File[] | undefined): {
 /**
  * Converts technical file error messages to user-friendly ones
  */
-function formatFileError(error: Error): string {
+function formatFileError(
+  error: Error,
+  messages: {
+    tooLarge: (maxMB: string) => string;
+    tooMany: (maxFiles: number) => string;
+    combinedTooLarge: (maxMB: string) => string;
+    unsupported: string;
+    uploadFailed: string;
+  },
+): string {
   const msg = error.message.toLowerCase();
   const { maxFiles, maxFileSizeBytes, maxCombinedBytes } =
     FILE_UPLOAD_CONSTRAINTS;
@@ -145,7 +163,7 @@ function formatFileError(error: Error): string {
     msg.includes("10mb") ||
     msg.includes("too large")
   ) {
-    return `File is too large. Maximum file size is ${maxMB}MB per file.`;
+    return messages.tooLarge(maxMB);
   }
 
   // File count errors
@@ -154,20 +172,20 @@ function formatFileError(error: Error): string {
     msg.includes("maxfiles") ||
     msg.includes("5 files")
   ) {
-    return `Too many files. Maximum ${maxFiles} files allowed.`;
+    return messages.tooMany(maxFiles);
   }
 
   // Combined size errors
   if (msg.includes("total") && (msg.includes("50mb") || msg.includes("size"))) {
-    return `Total attachment size exceeds limit. Maximum combined size is ${maxCombinedMB}MB.`;
+    return messages.combinedTooLarge(maxCombinedMB);
   }
 
   // File type errors
   if (msg.includes("file type") || msg.includes("accept")) {
-    return "File type not supported. Please select a different file.";
+    return messages.unsupported;
   }
 
-  return error.message || "File upload failed. Please try again.";
+  return error.message || messages.uploadFailed;
 }
 
 function isSeveritySelectable(
@@ -189,6 +207,40 @@ export function SupportForm({
   onSubmit,
   onFileError,
 }: SupportFormProps) {
+  const t = useTranslations("sharedUi.support");
+  const supportFormSchema = useMemo(
+    () =>
+      createSupportFormSchema({
+        topicRequired: t("topicRequired"),
+        descriptionRequired: t("descriptionRequired"),
+      }),
+    [t],
+  );
+  const messageTypeLabels: Record<string, string> = {
+    Question: t("messageTypes.question"),
+    Feedback: t("messageTypes.feedback"),
+    Bug: t("messageTypes.bug"),
+  };
+  const severityLabels: Record<string, string> = {
+    [SEVERITIES[0]]: t("severities.critical"),
+    [SEVERITIES[1]]: t("severities.major"),
+    [SEVERITIES[2]]: t("severities.minor"),
+  };
+  const topicLabels: Record<string, string> = {
+    "Account Changes": t("topics.accountChanges"),
+    "Account Deletion": t("topics.accountDeletion"),
+    "Billing / Usage": t("topics.billingUsage"),
+    "Inviting Users": t("topics.invitingUsers"),
+    "Set Up SSO": t("topics.setupSso"),
+    "Slack Connect Channel": t("topics.slackChannel"),
+    Observability: t("topics.observability"),
+    "Prompt Management": t("topics.promptManagement"),
+    Evaluation: t("topics.evaluation"),
+    Platform: t("topics.platform"),
+    "V4 Migration": t("topics.v4Migration"),
+    Other: t("topics.other"),
+  };
+
   // Tracks whether we've already warned about a short message
   const [warnedShortOnce, setWarnedShortOnce] = useState(false);
 
@@ -207,7 +259,7 @@ export function SupportForm({
   );
 
   const form = useForm<SupportFormInput>({
-    resolver: zodResolver(SupportFormSchema),
+    resolver: zodResolver(supportFormSchema),
     defaultValues: {
       messageType: "Question" as MessageType,
       severity: SEVERITY_3,
@@ -238,7 +290,7 @@ export function SupportForm({
   }, [selectedSeverity, canSelectHighSeverity, form]);
 
   const handleFormSubmit = async (values: SupportFormInput) => {
-    const parsed: SupportFormValues = SupportFormSchema.parse(values);
+    const parsed: SupportFormValues = supportFormSchema.parse(values);
     const msgLen = (parsed.message ?? "").trim().length;
 
     if (msgLen < 50 && !warnedShortOnce) {
@@ -261,12 +313,18 @@ export function SupportForm({
       // Parse inside the try so a failure surfaces via form.setError below
       // instead of escaping as an unhandled rejection (the confirm dialog
       // calls this outside react-hook-form's handleSubmit).
-      const parsed: SupportFormValues = SupportFormSchema.parse(values);
+      const parsed: SupportFormValues = supportFormSchema.parse(values);
 
       setIsSubmittingLocal(true);
 
       // Validate files using centralized validation function
-      const validation = validateFiles(files);
+      const validation = validateFiles(files, {
+        tooMany: (maxFiles) => t("maxFiles", { maxFiles }),
+        tooLarge: (fileName, maxMB) =>
+          t("namedFileTooLarge", { fileName, maxMB }),
+        combinedTooLarge: (totalMB, maxMB) =>
+          t("combinedFilesTooLarge", { totalMB, maxMB }),
+      });
       if (!validation.isValid) {
         throw new Error(validation.error);
       }
@@ -289,10 +347,7 @@ export function SupportForm({
       reportNonTrpcError(err, "support");
       form.setError("message", {
         type: "manual",
-        message:
-          err instanceof Error
-            ? err.message
-            : "Failed to submit support request.",
+        message: err instanceof Error ? err.message : t("submitFailed"),
       });
     } finally {
       setIsSubmittingLocal(false);
@@ -315,7 +370,7 @@ export function SupportForm({
             name="messageType"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Message Type</FormLabel>
+                <FormLabel>{t("messageType")}</FormLabel>
                 <FormControl>
                   <div className="grid grid-cols-3 gap-2">
                     {MESSAGE_TYPES.map((v) => (
@@ -327,14 +382,14 @@ export function SupportForm({
                         onClick={() => field.onChange(v)}
                       >
                         <span className="truncate" title={v}>
-                          {v}
+                          {messageTypeLabels[v] ?? v}
                         </span>
                       </Button>
                     ))}
                   </div>
                 </FormControl>
                 <FormDescription className="sr-only">
-                  Choose the type of your message.
+                  {t("chooseMessageType")}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -348,27 +403,30 @@ export function SupportForm({
             name="severity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Priority</FormLabel>
+                <FormLabel>{t("priority")}</FormLabel>
                 <FormControl>
                   <SelectInput
                     value={field.value}
                     onValueChange={field.onChange}
-                    placeholder="Select a priority"
+                    placeholder={t("selectPriority")}
                     options={SEVERITIES.map((severity) => {
                       if (
                         isSeveritySelectable(severity, canSelectHighSeverity)
                       ) {
-                        return { value: severity, label: severity };
+                        return {
+                          value: severity,
+                          label: severityLabels[severity] ?? severity,
+                        };
                       }
 
                       return {
                         value: severity,
-                        label: severity,
+                        label: severityLabels[severity] ?? severity,
                         disabled: true as const,
                         disabledReason:
                           severity === SEVERITY_1
-                            ? "Severity 1 is available on the Enterprise plan."
-                            : "Severity 2 is available on the Enterprise plan.",
+                            ? t("severityOnePlan")
+                            : t("severityTwoPlan"),
                       };
                     })}
                   />
@@ -384,29 +442,29 @@ export function SupportForm({
             name="topic"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Topic</FormLabel>
+                <FormLabel>{t("topic")}</FormLabel>
                 <FormControl>
                   <SelectInput
                     value={field.value ?? undefined}
                     onValueChange={field.onChange}
-                    placeholder="Select a topic"
+                    placeholder={t("selectTopic")}
                     options={[
                       {
                         type: "group",
                         id: "product-features",
-                        label: "Product Features",
-                        options: productFeatureTopics.map((t) => ({
-                          value: t,
-                          label: t,
+                        label: t("productFeatures"),
+                        options: productFeatureTopics.map((topic) => ({
+                          value: topic,
+                          label: topicLabels[topic] ?? topic,
                         })),
                       },
                       {
                         type: "group",
                         id: "operations",
-                        label: "Operations",
-                        options: TopicGroups.Operations.map((t) => ({
-                          value: t,
-                          label: t,
+                        label: t("operations"),
+                        options: TopicGroups.Operations.map((topic) => ({
+                          value: topic,
+                          label: topicLabels[topic] ?? topic,
                         })),
                       },
                     ]}
@@ -424,12 +482,12 @@ export function SupportForm({
               name="integrationType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Integration Type (optional)</FormLabel>
+                  <FormLabel>{t("integrationType")}</FormLabel>
                   <FormControl>
                     <SelectInput
                       value={field.value ?? ""}
                       onValueChange={field.onChange}
-                      placeholder="Select integration type"
+                      placeholder={t("selectIntegrationType")}
                       options={INTEGRATION_TYPES.map((integrationType) => ({
                         value: integrationType,
                         label: integrationType,
@@ -448,10 +506,9 @@ export function SupportForm({
             name="message"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Message</FormLabel>
+                <FormLabel>{t("message")}</FormLabel>
                 <div className="text-muted-foreground text-xs">
-                  We will email you at your account address. Replies may take up
-                  to one business day.
+                  {t("emailNotice")}
                 </div>
                 <FormControl>
                   <div className="relative w-full">
@@ -460,8 +517,8 @@ export function SupportForm({
                       rows={8}
                       placeholder={
                         isProductFeatureTopic
-                          ? "Please explain as fully as possible what you're aiming to do, and what you'd like help with.\n\nIf your question involves a specific trace, prompt, score, etc. please include a link to it."
-                          : "Please explain as fully as possible what you're aiming to do, and what you'd like help with."
+                          ? t("messagePlaceholderWithLink")
+                          : t("messagePlaceholder")
                       }
                     />
                   </div>
@@ -473,9 +530,7 @@ export function SupportForm({
                     role="status"
                     aria-live="polite"
                   >
-                    The message seems short — adding a bit more context can help
-                    us get you a quicker, smarter answer. You can submit again
-                    as is, or add more details.
+                    {t("shortMessage")}
                   </p>
                 )}
 
@@ -497,7 +552,17 @@ export function SupportForm({
                       })
                     }
                     onError={(error) => {
-                      onFileError(formatFileError(error));
+                      onFileError(
+                        formatFileError(error, {
+                          tooLarge: (maxMB) => t("fileTooLarge", { maxMB }),
+                          tooMany: (maxFiles) =>
+                            t("tooManyFiles", { maxFiles }),
+                          combinedTooLarge: (maxMB) =>
+                            t("combinedSizeTooLarge", { maxMB }),
+                          unsupported: t("unsupportedFileType"),
+                          uploadFailed: t("uploadFailed"),
+                        }),
+                      );
                     }}
                     src={files}
                     variant="compact"
@@ -507,7 +572,7 @@ export function SupportForm({
                 {files && files.length > 0 && (
                   <div className="p-0 text-left text-sm font-bold">
                     <div className="text-muted-foreground mb-2 text-xs font-bold">
-                      Attached files
+                      {t("attachedFiles")}
                     </div>
                     {files?.map((file) => (
                       <div
@@ -523,7 +588,7 @@ export function SupportForm({
                           }
                           className="p-0"
                         >
-                          <span className="sr-only">Remove file</span>
+                          <span className="sr-only">{t("removeFile")}</span>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                         {file.name}
@@ -547,7 +612,7 @@ export function SupportForm({
               }}
               className="w-full"
             >
-              Cancel
+              {t("cancel")}
             </Button>
 
             <Button
@@ -558,20 +623,19 @@ export function SupportForm({
               {isSubmittingLocal ? (
                 <span className="inline-flex items-center gap-2">
                   <Spinner size="sm" />
-                  Submitting…
+                  {t("submitting")}
                 </span>
               ) : messageIsShortAfterWarning ? (
-                "Submit Anyways"
+                t("submitAnyway")
               ) : (
-                "Submit"
+                t("submit")
               )}
             </Button>
           </div>
 
           {isSubmittingLocal && (
             <div className="text-muted-foreground text-xs">
-              This can take a few seconds — hang tight while we submit your
-              request.
+              {t("submittingNotice")}
             </div>
           )}
         </form>
@@ -581,20 +645,15 @@ export function SupportForm({
       <AlertDialog open={sev1ConfirmOpen} onOpenChange={setSev1ConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Confirm Severity 1 (Critical Business Impact)
-            </AlertDialogTitle>
+            <AlertDialogTitle>{t("confirmSeverityOne")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Please confirm that your issue has critical business impact. This
-              means it severely impacts your use of Langfuse in production, such
-              as loss of production data, ingestion issues, or prompt fetching
-              issues.
+              {t("confirmSeverityOneDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => submitForm(form.getValues())}>
-              Confirm &amp; Submit
+              {t("confirmSubmit")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

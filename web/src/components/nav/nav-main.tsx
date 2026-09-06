@@ -11,7 +11,17 @@ import {
 } from "@/src/components/ui/sidebar";
 import Link from "next/link";
 import { type ReactNode } from "react";
-import { type RouteGroup } from "@/src/components/layouts/routes";
+import {
+  RouteGroup as RouteGroupValue,
+  type RouteGroup,
+} from "@/src/components/layouts/routes";
+import { useTranslations } from "next-intl";
+
+const routeGroupMessageKeys = {
+  [RouteGroupValue.Observability]: "observability",
+  [RouteGroupValue.PromptManagement]: "promptManagement",
+  [RouteGroupValue.Evaluation]: "evaluation",
+} as const;
 
 export type NavMainItem = {
   title: string;
@@ -55,6 +65,8 @@ export function NavMain({
     ungrouped: NavMainItem[];
   };
 }) {
+  const t = useTranslations("navigation.groups");
+
   return (
     <>
       <SidebarGroup>
@@ -84,7 +96,9 @@ export function NavMain({
       {items.grouped &&
         Object.entries(items.grouped).map(([group, items]) => (
           <SidebarGroup key={group}>
-            <SidebarGroupLabel>{group}</SidebarGroupLabel>
+            <SidebarGroupLabel>
+              {t(routeGroupMessageKeys[group as RouteGroup])}
+            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {items.map((item) => (

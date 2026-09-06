@@ -18,8 +18,10 @@ import { api, reportNonTrpcError } from "@/src/utils/api";
 import { Alert } from "@/src/components/design-system/Alert/Alert";
 import { CreateLLMApiKeyDialog } from "./CreateLLMApiKeyDialog";
 import { UpdateLLMApiKeyDialog } from "./UpdateLLMApiKeyDialog";
+import { useTranslations } from "next-intl";
 
 export function LlmApiKeyList(props: { projectId: string }) {
+  const t = useTranslations("llmConnections.list");
   const [editingKeyId, setEditingKeyId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
 
@@ -48,12 +50,10 @@ export function LlmApiKeyList(props: { projectId: string }) {
   if (!hasAccess) {
     return (
       <div>
-        <Header title="LLM Connections" />
+        <Header title={t("title")} />
         <Alert>
-          <Alert.Title>Access Denied</Alert.Title>
-          <Alert.Description>
-            You do not have permission to view LLM API keys for this project.
-          </Alert.Description>
+          <Alert.Title>{t("accessDeniedTitle")}</Alert.Title>
+          <Alert.Description>{t("accessDeniedDescription")}</Alert.Description>
         </Alert>
       </div>
     );
@@ -61,27 +61,28 @@ export function LlmApiKeyList(props: { projectId: string }) {
 
   return (
     <div id="llm-api-keys">
-      <Header title="LLM Connections" />
-      <p className="mb-4 text-sm">
-        Connect your LLM services to enable evaluations and playground features.
-        Your provider will charge based on usage.
-      </p>
+      <Header title={t("title")} />
+      <p className="mb-4 text-sm">{t("description")}</p>
       <Card className="mb-4 overflow-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="text-primary md:table-cell">
-                Provider
+                {t("columns.provider")}
               </TableHead>
               <TableHead className="text-primary md:table-cell">
-                Adapter
+                {t("columns.adapter")}
               </TableHead>
               <TableHead className="text-primary md:table-cell">
-                Base URL
+                {t("columns.baseUrl")}
               </TableHead>
-              <TableHead className="text-primary">API Key</TableHead>
+              <TableHead className="text-primary">
+                {t("columns.apiKey")}
+              </TableHead>
               {hasExtraHeaderKeys ? (
-                <TableHead className="text-primary">Extra headers</TableHead>
+                <TableHead className="text-primary">
+                  {t("columns.extraHeaders")}
+                </TableHead>
               ) : null}
               <TableHead />
             </TableRow>
@@ -94,7 +95,7 @@ export function LlmApiKeyList(props: { projectId: string }) {
                   colSpan={6}
                   className="text-center"
                 >
-                  None
+                  {t("none")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -114,7 +115,7 @@ export function LlmApiKeyList(props: { projectId: string }) {
                     density="comfortable"
                     className="max-w-md overflow-auto font-mono"
                   >
-                    {apiKey.baseURL ?? "default"}
+                    {apiKey.baseURL ?? t("defaultBaseUrl")}
                   </TableCell>
                   <TableCell density="comfortable" className="font-mono">
                     {apiKey.displaySecretKey}
@@ -163,6 +164,7 @@ export function LlmApiKeyList(props: { projectId: string }) {
 
 // show dialog to let user confirm that this is a destructive action
 function DeleteApiKeyButton(props: { projectId: string; apiKeyId: string }) {
+  const t = useTranslations("llmConnections.list.delete");
   const capture = usePostHogClientCapture();
 
   const utils = api.useUtils();
@@ -180,9 +182,9 @@ function DeleteApiKeyButton(props: { projectId: string; apiKeyId: string }) {
           <TrashIcon className="h-4 w-4" />
         </Button>
       }
-      title="Delete LLM Connection"
-      description="Are you sure you want to delete this connection? This action cannot be undone."
-      confirmLabel="Permanently delete"
+      title={t("title")}
+      description={t("description")}
+      confirmLabel={t("confirm")}
       loading={mutDeleteApiKey.isPending}
       onConfirm={() => {
         mutDeleteApiKey

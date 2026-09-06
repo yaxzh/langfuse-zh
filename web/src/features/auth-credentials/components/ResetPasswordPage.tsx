@@ -24,22 +24,35 @@ import { TRPCClientError } from "@trpc/client";
 import Link from "next/link";
 import { ErrorPage } from "@/src/components/error-page";
 import { usePostHogClientCapture } from "@/src/features/posthog-analytics";
-import { passwordSchema } from "@/src/features/auth/lib/signupSchema";
+import { createPasswordSchema } from "@/src/features/auth/lib/signupSchema";
 import { useLangfuseCloudRegion } from "@/src/features/organizations/hooks";
+import { useTranslations } from "next-intl";
+import { AuthLanguageSwitcher } from "@/src/features/i18n/AuthLanguageSwitcher";
 import { PASSWORD_SETUP_EMAIL_STORAGE_KEY } from "@/src/features/auth-credentials/lib/credentialsUtils";
 
-const resetPasswordSchema = z
-  .object({
-    token: z.string().regex(/^\d{6}$/, {
-      message: "Verification code must be 6 digits.",
-    }),
-    password: passwordSchema,
-    confirmPassword: passwordSchema,
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
+const createResetPasswordSchema = ({
+  passwordMin,
+  passwordSecure,
+  invalidToken,
+  passwordsMismatch,
+}: {
+  passwordMin: string;
+  passwordSecure: string;
+  invalidToken: string;
+  passwordsMismatch: string;
+}) => {
+  const passwordSchema = createPasswordSchema({ passwordMin, passwordSecure });
+  return z
+    .object({
+      token: z.string().regex(/^\d{6}$/, { message: invalidToken }),
+      password: passwordSchema,
+      confirmPassword: passwordSchema,
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: passwordsMismatch,
+      path: ["confirmPassword"],
+    });
+};
 
 export function ResetPasswordPage({
   passwordResetAvailable,
@@ -50,6 +63,7 @@ export function ResetPasswordPage({
   initialEmail?: string;
   intent?: "reset" | "setup";
 }) {
+  const t = useTranslations("auth");
   const session = useSession();
   const router = useRouter();
   const { isLangfuseCloud, region } = useLangfuseCloudRegion();
@@ -68,6 +82,12 @@ export function ResetPasswordPage({
   const mutResetPassword = api.credentials.resetPassword.useMutation();
   const effectiveEmail = session.data?.user?.email ?? email;
 
+  const resetPasswordSchema = createResetPasswordSchema({
+    passwordMin: t("common.passwordMin"),
+    passwordSecure: t("common.passwordSecure"),
+    invalidToken: t("verification.codePlaceholder"),
+    passwordsMismatch: t("passwordReset.passwordsMismatch"),
+  });
   const form = useForm({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
@@ -93,7 +113,7 @@ export function ResetPasswordPage({
     setFormError(null);
     setIsSuccess(false);
     if (!z.email().safeParse(effectiveEmail).success) {
-      setFormError("Enter a valid email address.");
+      setFormError(t("common.invalidEmail"));
       return;
     }
     capture(
@@ -131,39 +151,48 @@ export function ResetPasswordPage({
         setIsSuccess(false);
       }, 2000);
     } catch (error) {
-      if (error instanceof TRPCClientError) {
-        setFormError(error.message);
-      } else {
+      if (!(error instanceof TRPCClientError)) {
         console.error(error);
-        setFormError("An unknown error occurred");
       }
+      setFormError(t("passwordReset.unknownError"));
     }
   }
 
   if (!passwordResetAvailable)
     return (
-      <ErrorPage
-        title="Not available"
-        message="Password reset is not configured on this instance"
-        additionalButton={{
-          label: "Setup instructions",
-          href: "https://langfuse.com/self-hosting/security/authentication-and-sso#auth-email-password",
-        }}
-      />
+      <>
+        <AuthLanguageSwitcher />
+        <ErrorPage
+          title={t("passwordReset.notAvailable")}
+          message={t("passwordReset.notConfigured")}
+          signInLabel={t("signIn.submit")}
+          additionalButton={{
+            label: t("passwordReset.setupInstructions"),
+            href: "https://langfuse.com/self-hosting/security/authentication-and-sso#auth-email-password",
+          }}
+        />
+      </>
     );
 
-  const title = isSetMode ? "Set your password" : "Reset your password";
-  const pageTitle = isSetMode ? "Set Password" : "Reset Password";
-  const submitLabel = isSetMode ? "Set password" : "Update Password";
+  const title = isSetMode
+    ? t("passwordReset.setTitle")
+    : t("passwordReset.resetTitle");
+  const pageTitle = isSetMode
+    ? t("passwordReset.setPageTitle")
+    : t("passwordReset.resetPageTitle");
+  const submitLabel = isSetMode
+    ? t("passwordReset.setSubmit")
+    : t("passwordReset.updateSubmit");
   const successMessage = isSetMode
-    ? "Password set successfully. Redirecting ..."
-    : "Password successfully updated. Redirecting ...";
+    ? t("passwordReset.setSuccess")
+    : t("passwordReset.updateSuccess");
 
   return (
     <>
       <Head>
         <title>{pageTitle} | Langfuse</title>
       </Head>
+      <AuthLanguageSwitcher />
       <div className="flex flex-1 flex-col py-6 sm:min-h-full sm:justify-center sm:px-6 sm:py-12 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <Link href="/">
@@ -179,7 +208,7 @@ export function ResetPasswordPage({
               <Button asChild variant="ghost">
                 <Link href="/auth/sign-in">
                   <ArrowLeft className="mr-2 h-3 w-3" />
-                  Back to sign in
+                  {t("common.backToSignIn")}
                 </Link>
               </Button>
             </div>
@@ -194,7 +223,7 @@ export function ResetPasswordPage({
                 onSubmit={form.handleSubmit(onSubmit)}
               >
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t("common.email")}</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="jsdoe@example.com"
@@ -209,21 +238,20 @@ export function ResetPasswordPage({
                 {codeRequested ? (
                   <>
                     <p className="text-muted-foreground text-sm">
-                      Enter the 6-digit code from your email together with your
-                      new password. The code is valid for 3 minutes.
+                      {t("verification.inbox")} {t("verification.expires")}
                     </p>
                     <FormField
                       control={form.control}
                       name="token"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Verification code</FormLabel>
+                          <FormLabel>{t("verification.code")}</FormLabel>
                           <FormControl>
                             <Input
                               inputMode="numeric"
                               autoComplete="one-time-code"
                               maxLength={6}
-                              placeholder="6-digit code"
+                              placeholder={t("verification.codePlaceholder")}
                               {...field}
                             />
                           </FormControl>
@@ -237,7 +265,9 @@ export function ResetPasswordPage({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            {isSetMode ? "Password" : "New Password"}
+                            {isSetMode
+                              ? t("common.password")
+                              : t("passwordReset.newPassword")}
                           </FormLabel>
                           <FormControl>
                             <PasswordInput
@@ -256,8 +286,8 @@ export function ResetPasswordPage({
                         <FormItem>
                           <FormLabel>
                             {isSetMode
-                              ? "Confirm Password"
-                              : "Confirm New Password"}
+                              ? t("passwordReset.confirmPassword")
+                              : t("passwordReset.confirmNewPassword")}
                           </FormLabel>
                           <FormControl>
                             <PasswordInput
@@ -285,7 +315,7 @@ export function ResetPasswordPage({
                         isSetMode ? "/auth/setup-password" : undefined
                       }
                       onEmailSent={() => setCodeRequested(true)}
-                      label="Send another code"
+                      label={t("passwordReset.request")}
                     />
                   </>
                 ) : (
@@ -311,13 +341,13 @@ export function ResetPasswordPage({
         </div>
         {!isSetMode && session.status !== "authenticated" && (
           <div className="text-muted-foreground mx-auto mt-10 max-w-lg text-center text-xs">
-            You will only receive an email if an account with this email exists
-            and you have signed up with email and password. If you used an
-            authentication provider like Google, Gitlab, Okta, or GitHub, please{" "}
-            <Link href="/auth/sign-in" className="underline">
-              sign in
-            </Link>
-            .
+            {t.rich("passwordReset.deliveryNotice", {
+              signIn: (chunks) => (
+                <Link href="/auth/sign-in" className="underline">
+                  {chunks}
+                </Link>
+              ),
+            })}
           </div>
         )}
       </div>

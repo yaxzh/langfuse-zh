@@ -5,6 +5,7 @@ import {
   type NumericDiff,
 } from "@/src/features/datasets/lib/calculateBaselineDiff";
 import { cn } from "@/src/utils/tailwind";
+import { useTranslations } from "next-intl";
 
 const getVariant = (direction: "+" | "-", preferNegativeDirection: boolean) => {
   if (preferNegativeDirection) {
@@ -35,6 +36,7 @@ export function DiffLabel({
    */
   title?: string;
 }) {
+  const t = useTranslations("coreDetails.datasets.misc");
   if (diff.type === "NUMERIC") {
     return (
       <Badge
@@ -54,7 +56,8 @@ export function DiffLabel({
   if (diff.isDifferent) {
     /* Name the move when both sides are a single value: a categorical
        score going pass → fail is a diff, just not a number. */
-    const move = diff.from && diff.to ? `${diff.from} → ${diff.to}` : "Varies";
+    const move =
+      diff.from && diff.to ? `${diff.from} → ${diff.to}` : t("varies");
     return (
       <Badge
         size="sm"

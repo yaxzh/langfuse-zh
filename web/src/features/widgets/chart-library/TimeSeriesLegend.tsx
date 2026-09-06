@@ -8,6 +8,7 @@ import {
 import { getDimensionSummaries } from "@/src/features/widgets/chart-library/utils";
 import { getPlainTextFromReactNode } from "@/src/utils/react-node-plain-text";
 import { cn } from "@/src/utils/tailwind";
+import { useTranslations } from "next-intl";
 
 /** The 8-slot chart palette, cycled by series index (matches the series fills). */
 export const seriesColor = (index: number): string =>
@@ -159,9 +160,10 @@ export function SeriesOverflowNote({
   visibleCount: number;
   totalCount: number;
 }) {
+  const t = useTranslations("systemUi.chartControls");
   return (
     <div className="text-muted-foreground shrink-0 pb-1 text-right text-xs">
-      Showing top {visibleCount} of {totalCount} series
+      {t("seriesOverflow", { visibleCount, totalCount })}
     </div>
   );
 }
@@ -181,6 +183,7 @@ export function TimeSeriesLegend({
   onItemClick: (dimension: string) => void;
   formatSummary: (value: number) => string;
 }) {
+  const t = useTranslations("systemUi.chartControls");
   return (
     // Wrap onto multiple rows so every series stays visible, but cap the
     // legend's height and scroll inside it — a chart with hundreds of series
@@ -190,7 +193,8 @@ export function TimeSeriesLegend({
     <div className="[max-height:8rem] min-w-0 shrink-0 overflow-y-auto pt-2">
       <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
         {items.map((item) => {
-          const labelText = getPlainTextFromReactNode(item.label);
+          const labelText =
+            getPlainTextFromReactNode(item.label) ?? item.dimension;
           // Labels must describe the NEXT action, not the current state.
           // - toggle: click flips visibility → "Show"/"Hide".
           // - highlight: clicking the focused series clears focus ("Show all
@@ -199,11 +203,11 @@ export function TimeSeriesLegend({
           const ariaLabel =
             interaction === "toggle"
               ? item.dimmed
-                ? `Show ${labelText}`
-                : `Hide ${labelText}`
+                ? t("showSeries", { label: labelText })
+                : t("hideSeries", { label: labelText })
               : item.focused
-                ? "Show all series"
-                : `Show only ${labelText}`;
+                ? t("showAllSeries")
+                : t("showOnlySeries", { label: labelText });
           // aria-pressed reflects state: visible (toggle) / focused (highlight).
           const ariaPressed =
             interaction === "toggle" ? !item.dimmed : item.focused;

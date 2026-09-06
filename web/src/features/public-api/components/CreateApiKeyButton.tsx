@@ -6,6 +6,7 @@ import { PlusIcon } from "lucide-react";
 import { usePostHogClientCapture } from "@/src/features/posthog-analytics/usePostHogClientCapture";
 import { useLangfuseBaseUrl } from "@/src/features/public-api/hooks/useLangfuseEnvCode";
 import { ApiKeyCreateDialogContent } from "@/src/features/public-api/components/ApiKeyCreateDialogContent";
+import { useTranslations } from "next-intl";
 
 type ApiKeyScope = "project" | "organization";
 
@@ -13,6 +14,7 @@ export function CreateApiKeyButton(props: {
   entityId: string;
   scope: ApiKeyScope;
 }) {
+  const t = useTranslations("accessSettings.apiKeys");
   const utils = api.useUtils();
   const capture = usePostHogClientCapture();
 
@@ -77,7 +79,7 @@ export function CreateApiKeyButton(props: {
       <DialogTrigger asChild>
         <Button variant="secondary">
           <PlusIcon className="mr-1.5 -ml-0.5 h-5 w-5" aria-hidden="true" />
-          Create new API keys
+          {t("createNew")}
         </Button>
       </DialogTrigger>
       <ApiKeyCreateDialogContent

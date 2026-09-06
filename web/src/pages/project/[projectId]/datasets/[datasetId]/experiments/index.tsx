@@ -44,8 +44,10 @@ import { getDatasetBreadcrumb } from "@/src/features/datasets/utils/getDatasetBr
 import { ExperimentsTable } from "@/src/features/experiments/components/table";
 import { singleRunToExperimentsUrl } from "@/src/features/experiments/utils/experimentUrlTranslation";
 import { Skeleton } from "@/src/components/ui/skeleton";
+import { useTranslations } from "next-intl";
 
 export default function Dataset() {
+  const t = useTranslations("coreDetails.datasets.page");
   const router = useRouter();
   const capture = usePostHogClientCapture();
   const projectId = router.query.projectId as string;
@@ -102,10 +104,10 @@ export default function Dataset() {
     }
 
     showSuccessToast({
-      title: "Experiment triggered successfully",
-      description: "Waiting for experiment to complete...",
+      title: t("experimentSuccess"),
+      description: t("experimentWaiting"),
       link: {
-        text: "View experiment",
+        text: t("viewExperiment"),
         href: isExperimentsBetaActive
           ? singleRunToExperimentsUrl(projectId, data.runId)
           : `/project/${projectId}/datasets/${data.datasetId}/compare?runs=${data.runId}`,
@@ -164,6 +166,7 @@ export default function Dataset() {
   const breadcrumb = getDatasetBreadcrumb(
     projectId,
     datasetId,
+    t("datasets"),
     dataset.data?.name,
   );
 
@@ -194,7 +197,9 @@ export default function Dataset() {
                     onClick={() => capture("dataset_run:new_form_open")}
                   >
                     <FlaskConical className="h-4 w-4" />
-                    <span className="ml-2 hidden md:block">Run experiment</span>
+                    <span className="ml-2 hidden md:block">
+                      {t("runExperiment")}
+                    </span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
@@ -258,7 +263,9 @@ export default function Dataset() {
                   onClick={() => capture("dataset_run:new_form_open")}
                 >
                   <FlaskConical className="h-4 w-4" />
-                  <span className="ml-2 hidden md:block">Run experiment</span>
+                  <span className="ml-2 hidden md:block">
+                    {t("runExperiment")}
+                  </span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
@@ -325,7 +332,7 @@ export default function Dataset() {
                     <DropdownMenuItemWithSecondaryAction
                       disabled={disabled}
                       icon={disabled === undefined ? Edit : LockIcon}
-                      title="Edit"
+                      title={t("edit")}
                       onClick={openDialog}
                     />
                     <DropdownMenuItem asChild>
@@ -354,7 +361,7 @@ export default function Dataset() {
                           href={`/project/${projectId}/evals?target=dataset`}
                         >
                           <Bot className="mr-2 ml-1 h-4 w-4" />
-                          Manage Evaluators
+                          {t("manageEvaluators")}
                         </Link>
                       </DropdownMenuItem>
                     )}
@@ -385,8 +392,9 @@ export default function Dataset() {
           <DialogContent className="max-h-[90vh] max-w-(--breakpoint-md) overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {selectedEvaluatorData.evaluator.id ? "Edit" : "Configure"}{" "}
-                Evaluator
+                {selectedEvaluatorData.evaluator.id
+                  ? t("editEvaluator")
+                  : t("configureEvaluator")}
               </DialogTitle>
             </DialogHeader>
             <EvaluatorForm

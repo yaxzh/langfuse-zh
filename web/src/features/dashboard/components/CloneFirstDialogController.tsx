@@ -13,6 +13,7 @@ import { Button } from "@/src/components/ui/button";
 import { showErrorToast, showSuccessToast } from "@/src/features/notifications";
 import { usePostHogClientCapture } from "@/src/features/posthog-analytics";
 import { type DashboardPlacement } from "@/src/features/widgets/components/DashboardGrid";
+import { useTranslations } from "next-intl";
 
 /**
  * Clone-first flow for Langfuse-managed (read-only) dashboards: any edit
@@ -25,6 +26,7 @@ type CloneFirstDialogControllerProps = {
   projectId: string;
   dashboardId: string;
   dashboardName: string;
+  dashboardDisplayName?: string;
   /** Set the clone as this project's Home dashboard in the same gesture. */
   setAsHome?: boolean;
   /** The attempted edit (e.g. moved/removed tile) to apply to the clone. */
@@ -83,6 +85,7 @@ function CloneFirstDialogContent({
   projectId,
   dashboardId,
   dashboardName,
+  dashboardDisplayName = dashboardName,
   setAsHome = false,
   pendingDefinition,
 }: Omit<CloneFirstDialogControllerProps, "onCancel"> & {
@@ -90,6 +93,7 @@ function CloneFirstDialogContent({
   cancelDialog: () => boolean;
   onPendingChange: (isPending: boolean) => void;
 }) {
+  const t = useTranslations("systemUi.dashboardExtras");
   const router = useRouter();
   const utils = api.useUtils();
   const capture = usePostHogClientCapture();
@@ -132,10 +136,8 @@ function CloneFirstDialogContent({
         owner: "LANGFUSE",
       });
       showSuccessToast({
-        title: "Editable copy created",
-        description: setAsHome
-          ? "The copy is now this project's Home dashboard"
-          : "You are now working on your own copy",
+        title: t("editableCopyCreated"),
+        description: setAsHome ? t("copyIsHome") : t("workingOnCopy"),
         duration: 3000,
       });
       closeDialog();
@@ -147,7 +149,7 @@ function CloneFirstDialogContent({
     },
     onError: (e) => {
       onPendingChange(false);
-      showErrorToast("Failed to create copy", e.message);
+      showErrorToast(t("createCopyFailed"), e.message);
     },
   });
 
@@ -168,33 +170,27 @@ function CloneFirstDialogContent({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Create your editable copy</DialogTitle>
+        <DialogTitle>{t("createEditableCopy")}</DialogTitle>
       </DialogHeader>
       <DialogBody>
         <div className="text-muted-foreground grid gap-3 py-4 text-sm">
           <p>
             <span className="text-foreground font-bold">
-              &ldquo;{dashboardName}&rdquo;
+              &ldquo;{dashboardDisplayName}&rdquo;
             </span>{" "}
-            is maintained by Langfuse and can&rsquo;t be edited directly.
-            We&rsquo;ll create your own editable copy in this project
-            {pendingDefinition ? " with your change applied" : ""}
-            {setAsHome ? " and show it on your Home page from now on" : ""}.
+            {t("maintainedCopyDescription")}
+            {pendingDefinition ? ` ${t("withChangeApplied")}` : ""}
+            {setAsHome ? ` ${t("showOnHome")}` : ""}.
           </p>
-          <p>
-            Langfuse-maintained tiles on the copy can be rearranged or removed;
-            editing their content will become available in a future release.
-          </p>
+          <p>{t("maintainedTilesDescription")}</p>
           {existingClone && (
             <div className="bg-muted/50 flex flex-wrap items-center justify-between gap-2 rounded-md border p-3">
               <span>
-                You already have a copy:{" "}
+                {t("existingCopy")}{" "}
                 <span className="text-foreground font-bold">
                   &ldquo;{existingClone.name}&rdquo;
                 </span>
-                {pendingDefinition
-                  ? " — opening it will discard your attempted change"
-                  : ""}
+                {pendingDefinition ? ` - ${t("openingDiscardsChange")}` : ""}
               </span>
               <Button
                 variant="outline"
@@ -214,7 +210,7 @@ function CloneFirstDialogContent({
                 }}
               >
                 <ExternalLinkIcon size={14} className="mr-1" />
-                Open it instead
+                {t("openInstead")}
               </Button>
             </div>
           )}
@@ -228,14 +224,14 @@ function CloneFirstDialogContent({
             type="button"
             disabled={cloneDashboard.isPending}
           >
-            Cancel
+            {t("cancel")}
           </Button>
           <Button
             onClick={handleConfirm}
             type="button"
             loading={cloneDashboard.isPending}
           >
-            Create my copy
+            {t("createMyCopy")}
           </Button>
         </div>
       </DialogFooter>

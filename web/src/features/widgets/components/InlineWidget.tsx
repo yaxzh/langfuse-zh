@@ -24,6 +24,7 @@ import {
 import { isTimeSeriesChart } from "@/src/features/widgets/chart-library/utils";
 import { useReadPath } from "@/src/features/events/hooks/useReadPath";
 import { cn } from "@/src/utils/tailwind";
+import { useTranslations } from "next-intl";
 
 // ============================================================================
 // Types
@@ -149,6 +150,7 @@ export function WidgetContent({
   zeroBaseline,
   emptyState,
 }: WidgetContentProps) {
+  const t = useTranslations("systemUi.widgetExtras");
   // Transport-only: `version` is a prop here, so an unresolved session can
   // never change WHAT is queried — only whether it streams (SSE) or not.
   const { isV4 } = useReadPath();
@@ -402,7 +404,7 @@ export function WidgetContent({
   if (isExternalLoading) {
     return (
       <div className="bg-background flex items-center justify-center rounded-lg border p-4">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">{t("loading")}</div>
       </div>
     );
   }

@@ -6,6 +6,7 @@ import { api } from "@/src/utils/api";
 import { showErrorToast } from "@/src/features/notifications/showErrorToast";
 import { SelectDashboardDialog } from "@/src/features/dashboard/components/SelectDashboardDialog";
 import { type ChartWidgetInput } from "../lib/chartConfigToWidget";
+import { useTranslations } from "next-intl";
 
 /**
  * "Add to dashboard" — turns an in-view chart into a real dashboard widget by
@@ -28,6 +29,7 @@ export const AddToDashboardButton = React.memo(function AddToDashboardButton({
   projectId: string;
   widgetInput: ChartWidgetInput;
 }) {
+  const t = useTranslations("evaluationAnalytics.chartView");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const createWidget = api.dashboardWidgets.create.useMutation();
@@ -48,11 +50,11 @@ export const AddToDashboardButton = React.memo(function AddToDashboardButton({
           // Surface failures instead of leaving the dialog open with no feedback;
           // keep it open so the user can retry or pick another dashboard.
           onError: (error) =>
-            showErrorToast("Failed to add chart to dashboard", error.message),
+            showErrorToast(t("addToDashboardFailed"), error.message),
         },
       );
     },
-    [createWidget, projectId, widgetInput, router],
+    [createWidget, projectId, widgetInput, router, t],
   );
 
   return (
@@ -65,7 +67,7 @@ export const AddToDashboardButton = React.memo(function AddToDashboardButton({
         disabled={createWidget.isPending}
       >
         <LayoutDashboard className="h-3.5 w-3.5" />
-        Add to dashboard
+        {t("addToDashboard")}
       </Button>
       <SelectDashboardDialog
         open={open}

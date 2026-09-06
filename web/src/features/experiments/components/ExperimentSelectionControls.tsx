@@ -10,6 +10,7 @@ import {
 } from "@/src/features/experiments/lib/analytics";
 import { ExperimentBaselineControls } from "./ExperimentBaselineControls";
 import { ExperimentComparisonSelector } from "./ExperimentComparisonSelector";
+import { useTranslations } from "next-intl";
 
 type ExperimentSelectionControlsProps = {
   projectId: string;
@@ -35,6 +36,7 @@ export function ExperimentSelectionControls({
   onBaselineClear,
   onComparisonIdsChange,
 }: ExperimentSelectionControlsProps) {
+  const t = useTranslations("evaluationAnalytics.experiments");
   const router = useRouter();
   const capture = usePostHogClientCapture();
   // The dataset each run belongs to, for `isSameDataset`. The picker reports its
@@ -116,7 +118,7 @@ export function ExperimentSelectionControls({
     <div className="flex w-[56dvw] min-w-0 flex-row gap-3">
       <div className="flex min-w-0 items-center">
         <div className="border-input bg-muted/30 flex h-8 w-auto shrink-0 items-center rounded-l-md border px-3 text-xs">
-          Baseline
+          {t("selection.baseline")}
         </div>
         <div className="w-full max-w-64 min-w-0 flex-1">
           <ExperimentBaselineControls

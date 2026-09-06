@@ -48,16 +48,18 @@ import { DashboardGrid } from "@/src/features/widgets/components/DashboardGrid";
 import { HomeDashboardSelect } from "@/src/features/dashboard/components/HomeDashboardSelect";
 import { useQueryProjectOrOrganization } from "@/src/features/projects/hooks";
 import { setupTracingRoute } from "@/src/features/setup/setupRoutes";
+import { useTranslations } from "next-intl";
 
 // Controller: no widget query may fire before the session resolves the v3/v4
 // read path — an unresolved session used to read as v3, fire a full wave of
 // legacy-table queries, then re-run the whole dashboard on v4 once the
 // session landed (via the scheduler reset key below).
 export default function Dashboard() {
+  const t = useTranslations("sharedUi.projectHome");
   const { readPath } = useReadPath();
   if (readPath === "unknown") {
     return (
-      <Page withPadding scrollable headerProps={{ title: "Home" }}>
+      <Page withPadding scrollable headerProps={{ title: t("home") }}>
         <NoDataOrLoading isLoading />
       </Page>
     );
@@ -66,6 +68,7 @@ export default function Dashboard() {
 }
 
 function HomeDashboard({ readPath }: { readPath: ResolvedReadPath }) {
+  const t = useTranslations("sharedUi.projectHome");
   const router = useRouter();
   const utils = api.useUtils();
   const capture = usePostHogClientCapture();
@@ -127,33 +130,33 @@ function HomeDashboard({ readPath }: { readPath: ResolvedReadPath }) {
 
   const filterColumns: ColumnDefinition[] = [
     {
-      name: "Trace Name",
+      name: t("traceName"),
       id: "traceName",
       type: "stringOptions",
       options: nameOptions,
       internal: "internalValue",
     },
     {
-      name: "Tags",
+      name: t("tags"),
       id: "tags",
       type: "arrayOptions",
       options: tagsOptions,
       internal: "internalValue",
     },
     {
-      name: "User",
+      name: t("user"),
       id: "user",
       type: "string",
       internal: "internalValue",
     },
     {
-      name: "Release",
+      name: t("release"),
       id: "release",
       type: "string",
       internal: "internalValue",
     },
     {
-      name: "Version",
+      name: t("version"),
       id: "version",
       type: "string",
       internal: "internalValue",
@@ -233,7 +236,7 @@ function HomeDashboard({ readPath }: { readPath: ResolvedReadPath }) {
       setPeekId(null);
     },
     onError: (e) => {
-      showErrorToast("Failed to set the default Home dashboard", e.message);
+      showErrorToast(t("setDefaultFailed"), e.message);
     },
   });
 
@@ -312,12 +315,12 @@ function HomeDashboard({ readPath }: { readPath: ResolvedReadPath }) {
         withPadding
         scrollable
         headerProps={{
-          title: "Home",
+          title: t("home"),
           actionButtonsLeft: (
             <>
               <MultiSelect
-                title="Environment"
-                label="Env"
+                title={t("environment")}
+                label={t("environmentShort")}
                 values={selectedEnvironments}
                 onValueChange={useDebounce(setSelectedEnvironments)}
                 options={environmentOptions.map((env) => ({
@@ -350,12 +353,13 @@ function HomeDashboard({ readPath }: { readPath: ResolvedReadPath }) {
                   setPeekId(id === appliedDefaultId ? null : id);
                 }}
                 currentDashboardName={dashboardName}
+                currentDashboardOwner={dashboardOwner}
               />
               {Boolean(peekId) && hasRbacCUDAccess && (
                 <Button
                   variant="outline"
                   loading={setHomeDashboard.isPending}
-                  title="Show this dashboard on Home for everyone in this project"
+                  title={t("setDefaultTitle")}
                   onClick={() => {
                     capture("dashboard:home_dashboard_set_default", {
                       dashboard_id: dashboardId,
@@ -370,13 +374,13 @@ function HomeDashboard({ readPath }: { readPath: ResolvedReadPath }) {
                     });
                   }}
                 >
-                  Set default
+                  {t("setDefault")}
                 </Button>
               )}
               <Button
                 variant="outline"
                 size="icon"
-                title="Edit this dashboard in Dashboards"
+                title={t("editDashboard")}
                 asChild
               >
                 <Link
@@ -389,9 +393,7 @@ function HomeDashboard({ readPath }: { readPath: ResolvedReadPath }) {
                   }
                 >
                   <PencilIcon className="h-4 w-4" />
-                  <span className="sr-only">
-                    Edit this dashboard in Dashboards
-                  </span>
+                  <span className="sr-only">{t("editDashboard")}</span>
                 </Link>
               </Button>
               {!isTracingCheckLoading &&

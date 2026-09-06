@@ -10,7 +10,11 @@ import {
   type OrderByState,
 } from "@langfuse/shared";
 import { experimentsFilterConfig } from "@/src/features/experiments/components/table/filter-config";
-import { experimentItemsFilterConfig } from "@/src/features/experiments/config/experiment-items-filter-config";
+import { getExperimentItemsFilterConfig } from "@/src/features/experiments/config/experiment-items-filter-config";
+
+const experimentItemsFilterConfig = getExperimentItemsFilterConfig(
+  (columnId) => columnId,
+);
 
 // Mock data for testing
 const mockColumns = [
@@ -336,7 +340,7 @@ describe("saved views built before the experiment ITEM score facets were unified
         },
         {
           type: "numberObject",
-          column: "trace_scores_avg",
+          column: "Trace Scores (numeric)",
           key: "nps",
           operator: ">",
           value: 5,

@@ -6,25 +6,54 @@ import {
 import { formatEvaluatorCostCalculation } from "@/src/features/evals/v2/fns/formatEvaluatorCostCalculation";
 import type { RuleCostEstimate } from "@/src/features/evals/v2/hooks/useRuleCostEstimate";
 import { usdFormatter } from "@/src/utils/numbers";
+import { useTranslations } from "next-intl";
 
 export function RuleEvaluatorCostEstimate({
   estimate,
 }: {
   estimate: RuleCostEstimate;
 }) {
+  const t = useTranslations("evaluationAnalytics.evaluations");
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <span className="cursor-help font-mono text-sm tabular-nums underline decoration-dotted underline-offset-4">
           {estimate.estimatedCostUsd === null
-            ? "Unavailable"
+            ? t("unavailable")
             : estimate.period === "selection"
               ? `≈ ${usdFormatter(estimate.estimatedCostUsd, 2, 2)}`
-              : `≈ ${usdFormatter(estimate.estimatedCostUsd, 2, 2)} / week`}
+              : t("rules.cost.amountPerWeek", {
+                  amount: usdFormatter(estimate.estimatedCostUsd, 2, 2),
+                })}
         </span>
       </TooltipTrigger>
       <TooltipContent className="max-w-72">
-        {formatEvaluatorCostCalculation(estimate)}
+        {formatEvaluatorCostCalculation({
+          ...estimate,
+          messages: {
+            codeEvaluatorNoCost: t("rules.cost.calculation.codeNoCost"),
+            formatZeroCost: (values) =>
+              t("rules.cost.calculation.zeroCost", values),
+            unavailable: t("rules.cost.calculation.unavailable"),
+            formatEstimatedCost: (values) =>
+              t("rules.cost.calculation.estimatedCost", values),
+            formatMatchingObservations: (count) =>
+              t("rules.cost.calculation.matchingObservations", { count }),
+            formatObservations: (count) =>
+              t("rules.cost.calculation.observations", { count }),
+            formatSamplingRate: (rate) =>
+              t("rules.cost.calculation.samplingRate", { rate }),
+            scope: t("rules.cost.calculation.scope"),
+            selectionScope: t("rules.cost.calculation.selectionScope"),
+            selectionUnavailable: t(
+              "rules.cost.calculation.selectionUnavailable",
+            ),
+            formatZeroSelectionCost: (values) =>
+              t("rules.cost.calculation.zeroSelectionCost", values),
+            formatEstimatedSelectionCost: (values) =>
+              t("rules.cost.calculation.estimatedSelectionCost", values),
+          },
+        })}
       </TooltipContent>
     </Tooltip>
   );

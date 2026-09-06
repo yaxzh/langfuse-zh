@@ -33,6 +33,7 @@ import {
 import { useExperimentStripMetric } from "@/src/features/experiments/hooks/useExperimentStripMetric";
 import { usePostHogClientCapture } from "@/src/features/posthog-analytics/usePostHogClientCapture";
 import { chartMetricChangedProps } from "@/src/features/experiments/lib/analytics";
+import { useTranslations } from "next-intl";
 
 /**
  * Stable node: `Chart` is memoized, so a fresh element on every render would
@@ -143,6 +144,7 @@ export function ExperimentMetricStrip({
   isExternalLoading = false,
   scoreCoverage,
 }: ExperimentMetricStripProps) {
+  const t = useTranslations("evaluationAnalytics.experiments");
   // Chronological, oldest first: an improving metric has to read left-to-right.
   // The table stays newest-first, so this is deliberately not the table order.
   const orderedExperiments = useMemo(
@@ -320,7 +322,9 @@ export function ExperimentMetricStrip({
               {Array.from(groupedOptions.entries()).map(([group, options]) => (
                 <SelectGroup key={group}>
                   <SelectLabel className="text-xs font-bold">
-                    {group}
+                    {group === "base"
+                      ? t("charts.baseMetrics")
+                      : t("grid.scores")}
                   </SelectLabel>
                   {options.map((option) => (
                     <SelectItem

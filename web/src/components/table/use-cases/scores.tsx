@@ -79,6 +79,7 @@ import {
   ScoresOutlierStrip,
   useScoresChartViewState,
 } from "@/src/features/scores-chart-view";
+import { useTranslations } from "next-intl";
 
 export type ScoresTableRow = {
   id: string;
@@ -162,6 +163,7 @@ export default function ScoresTable({
   showControlsInPageHeader = false,
   showAllEnvironments = false,
 }: ScoresTableProps) {
+  const t = useTranslations("productTables.scores");
   const peekContext = usePeekTableState();
 
   const scoresFilterConfig = useMemo(
@@ -312,9 +314,8 @@ export default function ScoresTable({
   const scoreDeleteMutation = api.scores.deleteMany.useMutation({
     onSuccess: () => {
       showSuccessToast({
-        title: "Scores deleted",
-        description:
-          "Selected scores will be deleted. Scores are removed asynchronously and may continue to be visible for up to 15 minutes.",
+        title: t("deletedTitle"),
+        description: t("deletedDescription"),
       });
     },
     onSettled: () => {
@@ -581,7 +582,7 @@ export default function ScoresTable({
     createIdTableColumn<ScoresTableRow>({
       accessorKey: "id",
       enableColumnFilter: false,
-      header: "Score ID",
+      header: t("columns.scoreId"),
       size: 100,
       enableSorting: false,
       defaultHidden: true,
@@ -589,21 +590,21 @@ export default function ScoresTable({
     }),
     createDateTableColumn<ScoresTableRow>({
       accessorKey: "timestamp",
-      header: "Timestamp",
+      header: t("columns.timestamp"),
       enableHiding: true,
       enableSorting: true,
       size: 150,
     }),
     createTextTableColumn<ScoresTableRow>({
       accessorKey: "name",
-      header: "Name",
+      header: t("columns.name"),
       enableHiding: true,
       enableSorting: true,
       size: 150,
     }),
     {
       accessorKey: "value",
-      header: "Value",
+      header: t("columns.value"),
       id: "value",
       enableHiding: true,
       enableSorting: true,
@@ -611,7 +612,7 @@ export default function ScoresTable({
     },
     createTextTableColumn<ScoresTableRow>({
       accessorKey: "dataType",
-      header: "Data Type",
+      header: t("columns.dataType"),
       enableHiding: true,
       enableSorting: true,
       defaultHidden: true,
@@ -619,7 +620,7 @@ export default function ScoresTable({
     }),
     {
       accessorKey: "source",
-      header: "Source",
+      header: t("columns.source"),
       id: "source",
       enableHiding: true,
       enableSorting: true,
@@ -628,7 +629,7 @@ export default function ScoresTable({
     },
     {
       accessorKey: "level",
-      header: "Level",
+      header: t("columns.level"),
       id: "level",
       enableHiding: true,
       defaultHidden: true,
@@ -645,7 +646,7 @@ export default function ScoresTable({
     },
     createIOTableColumn<ScoresTableRow>({
       accessorKey: "comment",
-      header: "Comment",
+      header: t("columns.comment"),
       enableHiding: true,
       size: 400,
       getCell: (value) => value || undefined,
@@ -653,7 +654,7 @@ export default function ScoresTable({
     }),
     createBadgeTableColumn<ScoresTableRow>({
       accessorKey: "environment",
-      header: "Environment",
+      header: t("columns.environment"),
       size: 150,
       enableHiding: true,
       defaultHidden: true,
@@ -661,7 +662,7 @@ export default function ScoresTable({
     {
       accessorKey: "traceTags",
       id: "traceTags",
-      header: "Trace Tags",
+      header: t("columns.traceTags"),
       size: 250,
       enableHiding: true,
       defaultHidden: true,
@@ -688,14 +689,14 @@ export default function ScoresTable({
     },
     {
       accessorKey: "metadata",
-      header: "Metadata",
+      header: t("columns.metadata"),
       id: "metadata",
       size: 400,
       loadingCell: () => (
         <ConnectedIOTableCell isLoading singleLine={rowHeight === "s"} />
       ),
       headerTooltip: {
-        description: "Add metadata to scores to track additional information.",
+        description: t("columns.metadataDescription"),
         // TODO: docs for metadata on scores
         href: "https://langfuse.com/docs/observability/features/metadata",
       },
@@ -714,7 +715,7 @@ export default function ScoresTable({
     },
     createLinkTableColumn<ScoresTableRow>({
       accessorKey: "traceName",
-      header: "Trace Name",
+      header: t("columns.traceName"),
       enableHiding: true,
       enableSorting: true,
       defaultHidden: true,
@@ -738,7 +739,7 @@ export default function ScoresTable({
     createLinkTableColumn<ScoresTableRow>({
       accessorKey: "traceId",
       enableColumnFilter: true,
-      header: "Trace",
+      header: t("columns.trace"),
       enableSorting: true,
       size: 100,
       getCell: (value) => {
@@ -769,7 +770,7 @@ export default function ScoresTable({
     }),
     createLinkTableColumn<ScoresTableRow>({
       accessorKey: "observationId",
-      header: "Observation",
+      header: t("columns.observation"),
       enableSorting: true,
       size: 100,
       getCell: (observationId, { row }) => {
@@ -801,7 +802,7 @@ export default function ScoresTable({
     }),
     createLinkTableColumn<ScoresTableRow>({
       accessorKey: "executionTraceId",
-      header: "Execution Trace",
+      header: t("columns.executionTrace"),
       enableSorting: false,
       enableHiding: true,
       defaultHidden: true,
@@ -820,7 +821,7 @@ export default function ScoresTable({
     }),
     createLinkTableColumn<ScoresTableRow>({
       accessorKey: "sessionId",
-      header: "Session",
+      header: t("columns.session"),
       enableHiding: true,
       enableSorting: true,
       size: 100,
@@ -838,9 +839,9 @@ export default function ScoresTable({
     }),
     createLinkTableColumn<ScoresTableRow>({
       accessorKey: "userId",
-      header: "User",
+      header: t("columns.user"),
       headerTooltip: {
-        description: "The user ID associated with the trace.",
+        description: t("columns.userDescription"),
         href: "https://langfuse.com/docs/observability/features/users",
       },
       enableHiding: true,
@@ -862,7 +863,7 @@ export default function ScoresTable({
     }),
     createUserTableColumn<ScoresTableRow, ScoresTableRow["author"]>({
       accessorKey: "author",
-      header: "Author",
+      header: t("columns.author"),
       enableHiding: true,
       defaultHidden: true,
       size: 150,
@@ -880,11 +881,11 @@ export default function ScoresTable({
     }),
     createLinkTableColumn<ScoresTableRow>({
       accessorKey: "jobConfigurationId",
-      header: isV4 ? "Evaluator" : "Eval Configuration ID",
+      header: isV4 ? t("columns.evaluator") : t("columns.evalConfigurationId"),
       headerTooltip: {
         description: isV4
-          ? "The evaluator associated with the score."
-          : "The Job Configuration ID associated with the score.",
+          ? t("columns.evaluatorDescription")
+          : t("columns.jobConfigurationDescription"),
         href: "https://langfuse.com/docs/evaluation/evaluation-methods/llm-as-a-judge",
       },
       enableHiding: true,
@@ -925,9 +926,8 @@ export default function ScoresTable({
           {
             id: "score-delete",
             type: BatchActionType.Delete,
-            label: "Delete Scores",
-            description:
-              "This action permanently deletes scores and cannot be undone. Score deletion happens asynchronously and may take up to 15 minutes.",
+            label: t("delete.label"),
+            description: t("delete.description"),
             accessCheck: {
               scope: "traces:delete",
               entitlement: "trace-deletion",
@@ -1184,14 +1184,14 @@ export default function ScoresTable({
                 columns={columns}
                 noResultsMessage={
                   <div className="flex flex-col items-center">
-                    <span>No scores found.</span>
+                    <span>{t("noResults")}</span>
                     <a
                       href="https://langfuse.com/faq/all/what-are-scores"
                       className="text-primary pointer-events-auto italic underline"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      What are scores?
+                      {t("learnMore")}
                     </a>
                   </div>
                 }

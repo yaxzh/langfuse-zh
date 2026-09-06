@@ -1,5 +1,6 @@
 /* eslint-disable @repo/no-style-props */
 import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { DashboardCard } from "@/src/features/dashboard/components/cards/DashboardCard";
 import { type ScoreDataTypeType, type FilterState } from "@langfuse/shared";
 import {
@@ -40,6 +41,7 @@ export function ChartScores(props: {
   schedulerId?: string;
   syncId?: string;
 }) {
+  const t = useTranslations("playgroundDashboard.dashboard.scores");
   const scoresQuery: QueryType = {
     view: "scores-numeric",
     dimensions: [{ field: "name" }, { field: "dataType" }, { field: "source" }],
@@ -114,8 +116,8 @@ export function ChartScores(props: {
   return (
     <DashboardCard
       className={props.className}
-      title="Scores"
-      description="Moving average per score"
+      title={t("title")}
+      description={t("description")}
       isLoading={props.isLoading || scores.isPending}
     >
       {!isEmptyTimeSeries({ data: extractedScores }) ? (
@@ -135,7 +137,7 @@ export function ChartScores(props: {
       ) : (
         <NoDataOrLoading
           isLoading={props.isLoading || scores.isPending}
-          description="Scores evaluate LLM quality and can be created manually or using the SDK."
+          description={t("emptyDescription")}
           href="https://langfuse.com/docs/evaluation/overview"
           className="h-auto grow"
         />

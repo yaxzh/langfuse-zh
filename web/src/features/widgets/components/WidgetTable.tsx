@@ -36,6 +36,7 @@ import { getChartTypeDisplayName } from "@/src/features/widgets/chart-library/ut
 import { type DashboardWidgetChartType } from "@langfuse/shared/src/db";
 import { type metricAggregations } from "@langfuse/shared/query";
 import { type z } from "zod";
+import { useTranslations } from "next-intl";
 
 type WidgetTableRow = {
   id: string;
@@ -55,6 +56,8 @@ function WidgetActionsCell({
   widgetId: string;
   owner: "PROJECT" | "LANGFUSE";
 }) {
+  const t = useTranslations("evaluationAnalytics.widgets");
+  const extrasT = useTranslations("systemUi.widgetExtras");
   const projectId = useProjectIdFromURL();
   const utils = api.useUtils();
   const capture = usePostHogClientCapture();
@@ -72,12 +75,9 @@ function WidgetActionsCell({
     },
     onError: (error) => {
       if (error.data?.code === "CONFLICT") {
-        showErrorToast(
-          "Widget in use",
-          "Widget is still in use. Please remove it from all dashboards before deleting it.",
-        );
+        showErrorToast(extrasT("inUseTitle"), extrasT("inUseDescription"));
       } else {
-        showErrorToast("Failed to delete widget", error.message);
+        showErrorToast(t("deleteFailed"), error.message);
       }
     },
   });
@@ -86,7 +86,7 @@ function WidgetActionsCell({
 
   const fetchExportSource = async (): Promise<WidgetExportSource> => {
     if (!projectId) {
-      throw new Error("Project ID is missing");
+      throw new Error(extrasT("projectMissing"));
     }
     const widget = await utils.dashboardWidgets.get.fetch(
       {
@@ -123,8 +123,8 @@ function WidgetActionsCell({
       });
     } catch (error) {
       showErrorToast(
-        "Failed to download widget",
-        error instanceof Error ? error.message : "Unknown error",
+        extrasT("downloadFailed"),
+        error instanceof Error ? error.message : extrasT("unknownError"),
       );
     }
   };
@@ -141,13 +141,13 @@ function WidgetActionsCell({
         widget_id: widgetId,
       });
       showSuccessToast({
-        title: "Widget copied",
-        description: "Paste it on any dashboard with Cmd/Ctrl+V.",
+        title: extrasT("copiedTitle"),
+        description: extrasT("pasteDescription"),
       });
     } catch (error) {
       showErrorToast(
-        "Failed to copy widget",
-        error instanceof Error ? error.message : "Unknown error",
+        extrasT("copyFailed"),
+        error instanceof Error ? error.message : extrasT("unknownError"),
       );
     }
   };
@@ -155,7 +155,7 @@ function WidgetActionsCell({
   const handleDuplicate = async () => {
     try {
       if (!projectId) {
-        throw new Error("Project ID is missing");
+        throw new Error(extrasT("projectMissing"));
       }
       const exportSource = await fetchExportSource();
       await createWidgetAsync({
@@ -171,13 +171,13 @@ function WidgetActionsCell({
       });
       utils.dashboardWidgets.invalidate();
       showSuccessToast({
-        title: "Widget cloned",
-        description: `Created "${exportSource.name} (Copy)".`,
+        title: extrasT("clonedTitle"),
+        description: extrasT("clonedDescription", { name: exportSource.name }),
       });
     } catch (error) {
       showErrorToast(
-        "Failed to duplicate widget",
-        error instanceof Error ? error.message : "Unknown error",
+        extrasT("duplicateFailed"),
+        error instanceof Error ? error.message : extrasT("unknownError"),
       );
     }
   };
@@ -186,22 +186,22 @@ function WidgetActionsCell({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="xs" aria-label="Widget actions">
+          <Button variant="ghost" size="xs" aria-label={t("actions")}>
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={handleCopyToClipboard}>
             <Copy className="mr-2 h-4 w-4" />
-            Copy widget
+            {extrasT("copyWidget")}
           </DropdownMenuItem>
           <DropdownMenuItem disabled={!hasCUDAccess} onClick={handleDuplicate}>
             <CopyPlus className="mr-2 h-4 w-4" />
-            Clone
+            {extrasT("clone")}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleDownloadJson}>
             <FileJson className="mr-2 h-4 w-4" />
-            Download as JSON
+            {extrasT("downloadJson")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -210,16 +210,16 @@ function WidgetActionsCell({
             className="text-destructive focus:text-destructive"
           >
             <Trash className="mr-2 h-4 w-4" />
-            Delete
+            {extrasT("delete")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <ConfirmDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
-        title="Delete widget"
-        description="This action permanently deletes this widget. If the widget is currently used in any dashboard, you will need to remove it from those dashboards first."
-        confirmLabel="Delete Widget"
+        title={t("deleteTitle")}
+        description={t("deleteDescription")}
+        confirmLabel={extrasT("deleteConfirmLabel")}
         loading={mutDeleteWidget.isPending}
         onConfirm={() => {
           if (!projectId) {
@@ -235,6 +235,8 @@ function WidgetActionsCell({
 }
 
 export function DashboardWidgetTable() {
+  const t = useTranslations("evaluationAnalytics.widgets");
+  const extrasT = useTranslations("systemUi.widgetExtras");
   const projectId = useProjectIdFromURL();
   const { setDetailPageList } = useDetailPageLists();
   const router = useRouter();
@@ -279,7 +281,7 @@ export function DashboardWidgetTable() {
   const widgetColumns = [
     createLinkTableColumn<WidgetTableRow>({
       accessorKey: "name",
-      header: "Name",
+      header: t("name"),
       enableSorting: true,
       size: 200,
       getCell: (name, { row }) => {
@@ -298,19 +300,19 @@ export function DashboardWidgetTable() {
     }),
     createTextTableColumn<WidgetTableRow>({
       accessorKey: "description",
-      header: "Description",
+      header: t("description"),
       size: 300,
     }),
     createTextTableColumn<WidgetTableRow>({
       accessorKey: "view",
-      header: "View Type",
+      header: extrasT("viewType"),
       enableSorting: true,
       size: 100,
       mapValue: (value) => startCase(value?.toLowerCase()),
     }),
     createTextTableColumn<WidgetTableRow>({
       accessorKey: "chartType",
-      header: "Chart Type",
+      header: t("chartType"),
       enableSorting: true,
       size: 100,
       mapValue: (value) =>
@@ -320,19 +322,19 @@ export function DashboardWidgetTable() {
     }),
     createDateTableColumn<WidgetTableRow>({
       accessorKey: "createdAt",
-      header: "Created At",
+      header: extrasT("createdAt"),
       enableSorting: true,
       size: 150,
     }),
     createDateTableColumn<WidgetTableRow>({
       accessorKey: "updatedAt",
-      header: "Updated At",
+      header: extrasT("updatedAt"),
       enableSorting: true,
       size: 150,
     }),
     columnHelper.display({
       id: "actions",
-      header: "Actions",
+      header: extrasT("actions"),
       size: 70,
       cell: (row) => {
         const id = row.row.original.id;

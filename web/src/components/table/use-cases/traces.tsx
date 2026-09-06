@@ -98,6 +98,7 @@ import { usePeekTableState } from "@/src/components/table/peek/contexts/PeekTabl
 import { useScoreColumns } from "@/src/features/scores/hooks/useScoreColumns";
 import { scoreFilters } from "@/src/features/scores/lib/scoreColumns";
 import { AddTracesToAnnotationQueueDialogController } from "@/src/features/annotation-queues/components/AddTracesToAnnotationQueueDialogController";
+import { useTranslations } from "next-intl";
 import { DialogController } from "@/src/components/ui/dialog";
 import { useHasProjectAccess } from "@/src/features/rbac/utils/checkProjectAccess";
 import { usePostHogClientCapture } from "@/src/features/posthog-analytics";
@@ -174,6 +175,7 @@ function TracesTableInternal({
 }: TracesTableProps & {
   openDeleteTraceDialog: (traceId: string) => void;
 }) {
+  const t = useTranslations("coreDetails.tables.traces");
   const peekContext = usePeekTableState();
   const hasTraceDeleteAccess = useHasProjectAccess({
     projectId,
@@ -553,9 +555,8 @@ function TracesTableInternal({
   const traceDeleteMutation = api.traces.deleteMany.useMutation({
     onSuccess: () => {
       showSuccessToast({
-        title: "Traces deleted",
-        description:
-          "Selected traces will be deleted. Traces are removed asynchronously and may continue to be visible for up to 15 minutes.",
+        title: t("deleted"),
+        description: t("deletedDescription"),
       });
     },
     onSettled: () => {
@@ -565,12 +566,13 @@ function TracesTableInternal({
 
   const addToQueueMutation = api.annotationQueueItems.createMany.useMutation({
     onSuccess: (data) => {
+      const queueName = data.queueName ?? t("annotationQueue");
       showSuccessToast({
-        title: "Traces added to queue",
-        description: `Selected traces will be added to queue "${data.queueName}". This may take a minute.`,
+        title: t("addedToQueue"),
+        description: t("addedToQueueDescription", { queue: queueName }),
         link: {
           href: `/project/${projectId}/annotation-queues/${data.queueId}`,
-          text: `View queue "${data.queueName}"`,
+          text: t("viewQueue", { queue: queueName }),
         },
       });
     },
@@ -641,11 +643,10 @@ function TracesTableInternal({
           {
             id: ActionId.TraceDelete,
             type: BatchActionType.Delete,
-            label: "Delete Traces",
-            description: `This action permanently deletes ${displayCount} traces and cannot be undone. Trace deletion happens asynchronously and may take up to 24 hours.`,
+            label: t("delete"),
+            description: t("deleteDescription", { count: displayCount }),
             disabled: selectAll && hasCommentFilter,
-            disabledReason:
-              "Batch deletion does not support comment filters. Remove the comment filter to delete.",
+            disabledReason: t("commentFilterUnsupported"),
             accessCheck: {
               scope: "traces:delete",
               entitlement: "trace-deletion",
@@ -657,8 +658,10 @@ function TracesTableInternal({
     {
       id: ActionId.TraceAddToAnnotationQueue,
       type: BatchActionType.Create,
-      label: "Add to Annotation Queue",
-      description: `Add ${displayCount} selected traces to an annotation queue.`,
+      label: t("addToAnnotationQueue"),
+      description: t("addToAnnotationQueueDescription", {
+        count: displayCount,
+      }),
       customDialog: true,
       accessCheck: {
         scope: "annotationQueues:CUD",
@@ -672,21 +675,21 @@ function TracesTableInternal({
     ...(hideControls ? [] : [selectActionColumn]),
     createDateTableColumn<TracesTableRow>({
       accessorKey: "timestamp",
-      header: "Timestamp",
+      header: t("timestamp"),
       size: 150,
       enableHiding: true,
       enableSorting,
     }),
     createTextTableColumn<TracesTableRow>({
       accessorKey: "name",
-      header: "Name",
+      header: t("name"),
       size: 150,
       enableHiding: true,
       enableSorting,
     }),
     {
       accessorKey: "input",
-      header: "Input",
+      header: t("input"),
       id: "input",
       size: 400,
       cellBackground: "gray",
@@ -711,7 +714,7 @@ function TracesTableInternal({
     },
     {
       accessorKey: "output",
-      header: "Output",
+      header: t("output"),
       id: "output",
       size: 400,
       cellBackground: "green",
@@ -737,7 +740,7 @@ function TracesTableInternal({
     {
       accessorKey: "levelCounts",
       id: "levelCounts",
-      header: "Observation Levels",
+      header: t("observationLevels"),
       size: 150,
       loadingCell: <Skeleton className="h-4 w-1/2" />,
       cell: ({ row }) => {
@@ -761,8 +764,8 @@ function TracesTableInternal({
     },
     {
       accessorKey: "latency",
+      header: t("latency"),
       id: "latency",
-      header: "Latency",
       size: 100,
       loadingCell: <Skeleton className="h-4 w-1/2" />,
       cell: ({ row }) => {
@@ -781,7 +784,7 @@ function TracesTableInternal({
     createTokenUsageTableColumn<TracesTableRow, TracesTableRow["usage"]>({
       id: "tokens",
       accessorFn: (row) => row.usage,
-      header: "Tokens",
+      header: t("tokens"),
       size: 180,
       enableSorting,
       enableHiding: true,
@@ -803,7 +806,7 @@ function TracesTableInternal({
     {
       accessorKey: "totalCost",
       id: "totalCost",
-      header: "Total Cost",
+      header: t("totalCost"),
       size: 130,
       loadingCell: <Skeleton className="h-4 w-1/2" />,
       cell: ({ row }) => {
@@ -829,30 +832,16 @@ function TracesTableInternal({
     },
     createBadgeTableColumn<TracesTableRow>({
       accessorKey: "environment",
-      header: "Environment",
+      header: t("environment"),
       size: 150,
       enableHiding: true,
     }),
     createTagsTableColumn<TracesTableRow>({
       accessorKey: "tags",
-      header: "Tags",
+      header: t("tags"),
       size: 150,
       headerTooltip: {
-        description: (
-          <>
-            Group traces with tags. Read more about implementing tags{" "}
-            <a
-              href="https://langfuse.com/docs/observability/features/tags"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="decoration-primary/30 hover:decoration-primary underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              here
-            </a>
-            .
-          </>
-        ),
+        description: t("tagsDescription"),
         href: "https://langfuse.com/docs/observability/features/tags",
       },
       shouldWrap: rowHeight !== "s",
@@ -860,28 +849,13 @@ function TracesTableInternal({
     }),
     {
       accessorKey: "metadata",
-      header: "Metadata",
+      header: t("metadata"),
       size: 400,
       loadingCell: () => (
         <ConnectedIOTableCell isLoading singleLine={rowHeight === "s"} />
       ),
       headerTooltip: {
-        description: (
-          <>
-            Add metadata to traces to track additional information. Read more
-            about adding metadata{" "}
-            <a
-              href="https://langfuse.com/docs/observability/features/metadata"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="decoration-primary/30 hover:decoration-primary underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              here
-            </a>
-            .
-          </>
-        ),
+        description: t("metadataDescription"),
         href: "https://langfuse.com/docs/observability/features/metadata",
       },
       cell: ({ row }) => {
@@ -905,7 +879,7 @@ function TracesTableInternal({
       : [
           {
             accessorKey: "scores",
-            header: "Scores",
+            header: t("scores"),
             id: "scores",
             enableHiding: true,
             defaultHidden: true,
@@ -920,25 +894,10 @@ function TracesTableInternal({
     createIdTableColumn<TracesTableRow>({
       accessorKey: "sessionId",
       enableColumnFilter: !omittedFilter.includes("sessionId"),
-      header: "Session",
+      header: t("session"),
       size: 150,
       headerTooltip: {
-        description: (
-          <>
-            Group traces into sessions to track longer conversations/workflows.
-            Read more about sessions{" "}
-            <a
-              href="https://langfuse.com/docs/observability/features/sessions"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="decoration-primary/30 hover:decoration-primary underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              here
-            </a>
-            .
-          </>
-        ),
+        description: t("sessionDescription"),
         href: "https://langfuse.com/docs/observability/features/sessions",
       },
       defaultHidden: true,
@@ -947,25 +906,10 @@ function TracesTableInternal({
     }),
     createIdTableColumn<TracesTableRow>({
       accessorKey: "userId",
-      header: "User",
+      header: t("user"),
       size: 150,
       headerTooltip: {
-        description: (
-          <>
-            Add <code>userId</code> to traces to track users. Read more about
-            user tracking{" "}
-            <a
-              href="https://langfuse.com/docs/observability/features/users"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="decoration-primary/30 hover:decoration-primary underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              here
-            </a>
-            .
-          </>
-        ),
+        description: t("userDescription"),
         href: "https://langfuse.com/docs/observability/features/users",
       },
       defaultHidden: true,
@@ -974,10 +918,10 @@ function TracesTableInternal({
     }),
     createNumberTableColumn<TracesTableRow, bigint>({
       accessorKey: "observationCount",
-      header: "Observations",
+      header: t("observations"),
       size: 120,
       headerTooltip: {
-        description: "The number of observations in the trace.",
+        description: t("observationCountDescription"),
       },
       enableHiding: true,
       defaultHidden: true,
@@ -987,7 +931,7 @@ function TracesTableInternal({
     }),
     createStatusTableColumn<TracesTableRow, ObservationLevelType>({
       accessorKey: "level",
-      header: "Status",
+      header: t("status"),
       size: 75,
       defaultHidden: true,
       enableHiding: true,
@@ -1003,24 +947,10 @@ function TracesTableInternal({
     }),
     createTextTableColumn<TracesTableRow>({
       accessorKey: "version",
-      header: "Version",
+      header: t("version"),
       size: 100,
       headerTooltip: {
-        description: (
-          <>
-            Track changes via the version tag. Read more about versions{" "}
-            <a
-              href="https://langfuse.com/docs/observability/features/releases-and-versioning"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="decoration-primary/30 hover:decoration-primary underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              here
-            </a>
-            .
-          </>
-        ),
+        description: t("versionDescription"),
         href: "https://langfuse.com/docs/observability/features/releases-and-versioning",
       },
       defaultHidden: true,
@@ -1029,25 +959,10 @@ function TracesTableInternal({
     }),
     createTextTableColumn<TracesTableRow>({
       accessorKey: "release",
-      header: "Release",
+      header: t("release"),
       size: 100,
       headerTooltip: {
-        description: (
-          <>
-            Track changes to your application via the release tag. Read more
-            about the release tag{" "}
-            <a
-              href="https://langfuse.com/docs/observability/features/releases-and-versioning"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="decoration-primary/30 hover:decoration-primary underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              here
-            </a>
-            .
-          </>
-        ),
+        description: t("releaseDescription"),
         href: "https://langfuse.com/docs/observability/features/releases-and-versioning",
       },
       defaultHidden: true,
@@ -1056,7 +971,7 @@ function TracesTableInternal({
     }),
     createIdTableColumn<TracesTableRow>({
       accessorKey: "id",
-      header: "Trace ID",
+      header: t("traceId"),
       size: 90,
       defaultHidden: true,
       enableHiding: true,
@@ -1064,7 +979,7 @@ function TracesTableInternal({
     }),
     {
       accessorKey: "cost",
-      header: "Cost",
+      header: t("cost"),
       id: "cost",
       enableHiding: true,
       defaultHidden: true,
@@ -1077,7 +992,7 @@ function TracesTableInternal({
         createNumberTableColumn<TracesTableRow>({
           accessorFn: (row) => row.cost?.inputCost?.toNumber(),
           id: "inputCost",
-          header: "Input Cost",
+          header: t("inputCost"),
           size: 100,
           emptyValue: "-",
           formatter: (value) => usdFormatter(value),
@@ -1092,7 +1007,7 @@ function TracesTableInternal({
         createNumberTableColumn<TracesTableRow>({
           accessorFn: (row) => row.cost?.outputCost?.toNumber(),
           id: "outputCost",
-          header: "Output Cost",
+          header: t("outputCost"),
           size: 100,
           emptyValue: "-",
           formatter: (value) => usdFormatter(value),
@@ -1108,7 +1023,7 @@ function TracesTableInternal({
     },
     {
       accessorKey: "usage",
-      header: "Usage",
+      header: t("usage"),
       id: "usage",
       enableHiding: true,
       defaultHidden: true,
@@ -1121,7 +1036,7 @@ function TracesTableInternal({
         createNumberTableColumn<TracesTableRow, bigint>({
           accessorFn: (row) => row.usage.inputUsage,
           id: "inputTokens",
-          header: "Input Tokens",
+          header: t("inputTokens"),
           size: 110,
           formatter: (value) => numberFormatter(value, 0),
           getValue: (value, { row }) =>
@@ -1135,7 +1050,7 @@ function TracesTableInternal({
         createNumberTableColumn<TracesTableRow, bigint>({
           accessorFn: (row) => row.usage.outputUsage,
           id: "outputTokens",
-          header: "Output Tokens",
+          header: t("outputTokens"),
           size: 110,
           formatter: (value) => numberFormatter(value, 0),
           getValue: (value, { row }) =>
@@ -1149,7 +1064,7 @@ function TracesTableInternal({
         createNumberTableColumn<TracesTableRow, bigint>({
           accessorFn: (row) => row.usage.totalUsage,
           id: "totalTokens",
-          header: "Total Tokens",
+          header: t("totalTokens"),
           size: 110,
           formatter: (value) => numberFormatter(value, 0),
           getValue: (value, { row }) =>
@@ -1168,7 +1083,7 @@ function TracesTableInternal({
           createDropdownTableColumn<TracesTableRow, TracesTableRow["id"]>({
             id: "action",
             accessorFn: (row) => row.id,
-            header: "Action",
+            header: t("action"),
             size: 70,
             isFixedPosition: true,
             renderMenu: (traceId) =>
@@ -1345,7 +1260,7 @@ function TracesTableInternal({
               controllers: viewControllers,
             }}
             searchConfig={{
-              metadataSearchFields: ["ID", "Trace Name", "User ID"],
+              metadataSearchFields: [t("traceId"), t("name"), t("user")],
               updateQuery: setSearchQuery,
               currentQuery: searchQuery ?? undefined,
               tableAllowsFullTextSearch: legacyTracingIoSearchEnabled,
@@ -1362,7 +1277,9 @@ function TracesTableInternal({
                     setSelectedRows({});
                     setSelectAll(false);
                   }}
-                  description={`Add ${displayCount} selected traces to an annotation queue.`}
+                  description={t("addToAnnotationQueueDescription", {
+                    count: displayCount,
+                  })}
                   onAddToQueue={handleAddToAnnotationQueue}
                 >
                   {({ openDialog }) => (

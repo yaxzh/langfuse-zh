@@ -28,6 +28,7 @@ import {
 import { TriangleAlert } from "lucide-react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { useTranslations } from "next-intl";
 
 type TransferProjectDialogOrganization = {
   id: string;
@@ -49,12 +50,13 @@ export function TransferProjectDialogContent({
   isPending,
   onConfirm,
 }: TransferProjectDialogContentProps) {
+  const t = useTranslations("workspace.dangerActions");
   const confirmMessage = `${organizationName}/${projectName}`
     .replaceAll(" ", "-")
     .toLowerCase();
   const formSchema = z.object({
     name: z.string().includes(confirmMessage, {
-      message: `Please confirm with "${confirmMessage}"`,
+      message: t("confirmValidation", { value: confirmMessage }),
     }),
     organizationId: z.string(),
   });
@@ -69,7 +71,7 @@ export function TransferProjectDialogContent({
   return (
     <DialogContent className="sm:max-w-[425px]">
       <DialogHeader>
-        <DialogTitle>Transfer Project</DialogTitle>
+        <DialogTitle>{t("transferProjectTitle")}</DialogTitle>
       </DialogHeader>
       <Form {...form}>
         <form
@@ -80,21 +82,12 @@ export function TransferProjectDialogContent({
         >
           <DialogBody>
             <Alert variant="warning" icon={TriangleAlert}>
-              <Alert.Title>Warning</Alert.Title>
+              <Alert.Title>{t("warning")}</Alert.Title>
               <Alert.Description>
-                Transferring the project will move it to a different
-                organization:
+                {t("transferWarningIntro")}
                 <ul className="list-disc pl-4">
-                  <li>
-                    Members who are not part of the new organization will lose
-                    access.
-                  </li>
-                  <li>
-                    The project remains fully operational as API keys, settings,
-                    and data will remain unchanged. All features (e.g. tracing,
-                    prompt management) will continue to work without
-                    interruption.
-                  </li>
+                  <li>{t("transferWarningAccess")}</li>
+                  <li>{t("transferWarningOperation")}</li>
                 </ul>
               </Alert.Description>
             </Alert>
@@ -103,7 +96,7 @@ export function TransferProjectDialogContent({
               name="organizationId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Select New Organization</FormLabel>
+                  <FormLabel>{t("selectNewOrganization")}</FormLabel>
                   <FormControl>
                     <Select
                       onValueChange={field.onChange}
@@ -111,7 +104,7 @@ export function TransferProjectDialogContent({
                       disabled={isPending}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select organization" />
+                        <SelectValue placeholder={t("selectOrganization")} />
                       </SelectTrigger>
                       <SelectContent>
                         {organizations.map((organization) => (
@@ -125,10 +118,7 @@ export function TransferProjectDialogContent({
                       </SelectContent>
                     </Select>
                   </FormControl>
-                  <FormDescription>
-                    Transfer this project to another organization where you have
-                    the ability to create projects.
-                  </FormDescription>
+                  <FormDescription>{t("transferDescription")}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -138,12 +128,12 @@ export function TransferProjectDialogContent({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Confirm</FormLabel>
+                  <FormLabel>{t("confirm")}</FormLabel>
                   <FormControl>
                     <Input placeholder={confirmMessage} {...field} />
                   </FormControl>
                   <FormDescription>
-                    {`To confirm, type "${confirmMessage}" in the input box `}
+                    {t("confirmInstruction", { value: confirmMessage })}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -157,7 +147,7 @@ export function TransferProjectDialogContent({
               loading={isPending}
               className="w-full"
             >
-              Transfer project
+              {t("transferProjectButton")}
             </Button>
           </DialogFooter>
         </form>

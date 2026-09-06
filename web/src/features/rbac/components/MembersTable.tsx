@@ -42,6 +42,7 @@ import { env } from "@/src/env.mjs";
 import { createTextTableColumn } from "@/src/components/design-system/table/columns/createTextTableColumn";
 import { Button } from "@/src/components/ui/button";
 import { Popover, PopoverTrigger } from "@/src/components/ui/popover";
+import { useTranslations } from "next-intl";
 
 export type MembersTableRow = {
   user: {
@@ -72,6 +73,7 @@ export function MembersTable({
   project?: { id: string; name: string };
   showSettingsCard?: boolean;
 }) {
+  const t = useTranslations("accessSettings.members");
   // Create a unique key for this table's pagination state
   const paginationKey = project
     ? `projectMembers_${project.id}_pagination`
@@ -158,7 +160,7 @@ export function MembersTable({
     {
       accessorKey: "user",
       id: "user",
-      header: "Name",
+      header: t("columns.name"),
       cell: ({ row }) => {
         const { name, image } = row.getValue("user") as MembersTableRow["user"];
         return (
@@ -175,21 +177,20 @@ export function MembersTable({
     },
     createTextTableColumn<MembersTableRow>({
       accessorKey: "email",
-      header: "Email",
+      header: t("columns.email"),
     }),
     createTextTableColumn<MembersTableRow, string[]>({
       accessorKey: "providers",
-      header: "SSO Provider",
+      header: t("columns.ssoProvider"),
       enableHiding: true,
       mapValue: (providers) => (providers?.length ? providers.join(", ") : "-"),
     }),
     {
       accessorKey: "orgRole",
       id: "orgRole",
-      header: "Organization Role",
+      header: t("columns.organizationRole"),
       headerTooltip: {
-        description:
-          "The org-role is the default role for this user in this organization and applies to the organization and all its projects.",
+        description: t("organizationRoleDescription"),
         href: "https://langfuse.com/docs/administration/rbac",
       },
       cell: ({ row }) => {
@@ -224,14 +225,16 @@ export function MembersTable({
                     side="right"
                   >
                     <p className="text-xs">
-                      The organization-level role can be edited in the{" "}
-                      <Link
-                        href={`/organization/${orgId}/settings/members`}
-                        className="underline"
-                      >
-                        organization settings
-                      </Link>
-                      .
+                      {t.rich("organizationRoleSettings", {
+                        settings: (chunks) => (
+                          <Link
+                            href={`/organization/${orgId}/settings/members`}
+                            className="underline"
+                          >
+                            {chunks}
+                          </Link>
+                        ),
+                      })}
                     </p>
                   </HoverCardContent>
                 </HoverCardPortal>
@@ -248,10 +251,9 @@ export function MembersTable({
           {
             accessorKey: "projectRole",
             id: "projectRole",
-            header: "Project Role",
+            header: t("columns.projectRole"),
             headerTooltip: {
-              description:
-                "The role for this user in this specific project. This role overrides the default project role.",
+              description: t("projectRoleDescription"),
               href: "https://langfuse.com/docs/administration/rbac",
             },
             cell: ({ row }) => {
@@ -262,7 +264,7 @@ export function MembersTable({
                 "meta",
               ) as MembersTableRow["meta"];
 
-              if (!projectRolesEntitlement) return "N/A on plan";
+              if (!projectRolesEntitlement) return t("notAvailableOnPlan");
 
               return (
                 <ProjectRoleDropdown
@@ -287,7 +289,7 @@ export function MembersTable({
           {
             accessorKey: "featurePreviews",
             id: "featurePreviews",
-            header: "Feature Previews",
+            header: t("columns.featurePreviews"),
             enableHiding: true,
             cell: ({ row }) => {
               const { featurePreviews, featurePreviewManagement, meta } =
@@ -306,7 +308,7 @@ export function MembersTable({
                       <>
                         <PopoverTrigger asChild>
                           <Button variant="outline" size="sm">
-                            {enabledCount}/{totalCount} enabled
+                            {t("enabledCount", { enabledCount, totalCount })}
                           </Button>
                         </PopoverTrigger>
                         {content}
@@ -321,14 +323,14 @@ export function MembersTable({
       : []),
     createDateTableColumn<MembersTableRow>({
       accessorKey: "createdAt",
-      header: "Member Since",
+      header: t("columns.memberSince"),
       enableHiding: true,
       defaultHidden: true,
     }),
     {
       accessorKey: "meta",
       id: "meta",
-      header: "Actions",
+      header: t("columns.actions"),
       enableHiding: false,
       cell: ({ row }) => {
         const { orgMembershipId, userId } = row.getValue(
@@ -342,8 +344,8 @@ export function MembersTable({
                 if (
                   confirm(
                     userId === session.data?.user?.id
-                      ? "Are you sure you want to leave the organization?"
-                      : "Are you sure you want to remove this member from the organization?",
+                      ? t("leaveOrganizationConfirm")
+                      : t("removeMemberConfirm"),
                   )
                 ) {
                   mutDeleteMember.mutate({ orgId, orgMembershipId });
@@ -437,15 +439,15 @@ export function MembersTable({
                   icon={<PlusIcon className="h-5 w-5" aria-hidden="true" />}
                 >
                   {hasOnlySingleProjectAccess
-                    ? "Add project member"
-                    : "Add new member"}
+                    ? t("addProjectMember")
+                    : t("addNewMember")}
                 </ActionButton>
               </Trigger>
             )}
           </CreateProjectMemberDialogController>
         }
         searchConfig={{
-          metadataSearchFields: ["Name", "Email"],
+          metadataSearchFields: [t("columns.name"), t("columns.email")],
           updateQuery: setSearchQuery,
           currentQuery: searchQuery ?? undefined,
           tableAllowsFullTextSearch: false,
@@ -538,6 +540,7 @@ const OrgRoleDropdown = ({
   userId: string;
   hasCudAccess: boolean;
 }) => {
+  const t = useTranslations("accessSettings.members");
   const utils = api.useUtils();
   const session = useSession();
   const mut = api.members.updateOrgMembership.useMutation({
@@ -545,8 +548,8 @@ const OrgRoleDropdown = ({
       utils.members.invalidate();
       if (data.userId === session.data?.user?.id) session.update();
       showSuccessToast({
-        title: "Saved",
-        description: "Organization role updated successfully",
+        title: t("saved"),
+        description: t("organizationRoleUpdated"),
         duration: 2000,
       });
     },
@@ -559,9 +562,7 @@ const OrgRoleDropdown = ({
       onValueChange={(value) => {
         if (
           userId !== session.data?.user?.id ||
-          confirm(
-            "Are you sure that you want to change your own organization role?",
-          )
+          confirm(t("changeOwnOrganizationRoleConfirm"))
         ) {
           mut.mutate({
             orgId,
@@ -598,6 +599,7 @@ const ProjectRoleDropdown = ({
   projectId: string;
   hasCudAccess: boolean;
 }) => {
+  const t = useTranslations("accessSettings.members");
   const utils = api.useUtils();
   const session = useSession();
   const mut = api.members.updateProjectRole.useMutation({
@@ -605,8 +607,8 @@ const ProjectRoleDropdown = ({
       utils.members.invalidate();
       if (data.userId === session.data?.user?.id) session.update();
       showSuccessToast({
-        title: "Saved",
-        description: "Project role updated successfully",
+        title: t("saved"),
+        description: t("projectRoleUpdated"),
         duration: 2000,
       });
     },
@@ -619,7 +621,7 @@ const ProjectRoleDropdown = ({
       onValueChange={(value) => {
         if (
           userId !== session.data?.user?.id ||
-          confirm("Are you sure that you want to change your own project role?")
+          confirm(t("changeOwnProjectRoleConfirm"))
         ) {
           mut.mutate({
             orgId,

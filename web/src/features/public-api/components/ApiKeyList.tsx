@@ -24,8 +24,8 @@ import { api, reportNonTrpcError } from "@/src/utils/api";
 import { TrashIcon } from "lucide-react";
 import { useState } from "react";
 import { Alert } from "@/src/components/design-system/Alert/Alert";
-import startCase from "lodash/startCase";
 import { useLangfuseEnvCode } from "@/src/features/public-api/hooks/useLangfuseEnvCode";
+import { useTranslations } from "next-intl";
 
 type ApiKeyScope = "project" | "organization";
 type ApiKeyEntity = { id: string; note: string | null };
@@ -40,6 +40,9 @@ type ApiKeyCreator = {
 
 export function ApiKeyList(props: { entityId: string; scope: ApiKeyScope }) {
   const { entityId, scope } = props;
+  const t = useTranslations("accessSettings.apiKeys");
+  const scopeLabel =
+    scope === "project" ? t("scopes.project") : t("scopes.organization");
   const envCode = useLangfuseEnvCode();
 
   if (!entityId) {
@@ -83,11 +86,11 @@ export function ApiKeyList(props: { entityId: string; scope: ApiKeyScope }) {
   if (!hasAccess) {
     return (
       <div>
-        <Header title="API Keys" />
+        <Header title={t("title")} />
         <Alert>
-          <Alert.Title>Access Denied</Alert.Title>
+          <Alert.Title>{t("accessDeniedTitle")}</Alert.Title>
           <Alert.Description>
-            You do not have permission to view API keys for this {scope}.
+            {t("accessDeniedDescription", { scope: scopeLabel })}
           </Alert.Description>
         </Alert>
       </div>
@@ -97,9 +100,9 @@ export function ApiKeyList(props: { entityId: string; scope: ApiKeyScope }) {
   return (
     <div className="space-y-4">
       <Header
-        title={startCase(`${scope} API keys`)}
+        title={scope === "project" ? t("projectTitle") : t("organizationTitle")}
         help={{
-          description: `Learn more about ${scope} API keys`,
+          description: t("learnMore", { scope: scopeLabel }),
           href:
             scope === "project"
               ? "https://langfuse.com/docs/api#authentication"
@@ -114,21 +117,27 @@ export function ApiKeyList(props: { entityId: string; scope: ApiKeyScope }) {
       <CodeView
         content={envCode}
         title=".env"
-        copiedToClipboardMessage="Secrets are not included, create a new key to copy them."
+        copiedToClipboardMessage={t("secretsExcluded")}
       />
       <Card className="mb-4 overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="text-primary hidden md:table-cell">
-                Created
+                {t("columns.created")}
               </TableHead>
               <TableHead className="text-primary hidden md:table-cell">
-                Created By
+                {t("columns.createdBy")}
               </TableHead>
-              <TableHead className="text-primary">Note</TableHead>
-              <TableHead className="text-primary">Public Key</TableHead>
-              <TableHead className="text-primary">Secret Key</TableHead>
+              <TableHead className="text-primary">
+                {t("columns.note")}
+              </TableHead>
+              <TableHead className="text-primary">
+                {t("columns.publicKey")}
+              </TableHead>
+              <TableHead className="text-primary">
+                {t("columns.secretKey")}
+              </TableHead>
               {/* <TableHead className="text-primary">Last used</TableHead> */}
               <TableHead />
             </TableRow>
@@ -141,7 +150,7 @@ export function ApiKeyList(props: { entityId: string; scope: ApiKeyScope }) {
                   colSpan={6}
                   className="text-center"
                 >
-                  None
+                  {t("none")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -204,6 +213,7 @@ function DeleteApiKeyButton(props: {
   apiKeyId: string;
   scope: ApiKeyScope;
 }) {
+  const t = useTranslations("accessSettings.apiKeys");
   const { entityId, apiKeyId, scope } = props;
   const capture = usePostHogClientCapture();
 
@@ -267,9 +277,9 @@ function DeleteApiKeyButton(props: {
           <TrashIcon className="h-4 w-4" />
         </Button>
       }
-      title="Delete API key"
-      description="Are you sure you want to delete this API key? This action cannot be undone."
-      confirmLabel="Permanently delete"
+      title={t("deleteTitle")}
+      description={t("deleteDescription")}
+      confirmLabel={t("permanentlyDelete")}
       loading={mutDeleteOrgApiKey.isPending || mutDeleteProjectApiKey.isPending}
       onConfirm={handleDelete}
     />
@@ -277,11 +287,12 @@ function DeleteApiKeyButton(props: {
 }
 
 function ApiKeyCreatedBy({ apiKey }: { apiKey: ApiKeyCreator }) {
+  const t = useTranslations("accessSettings.apiKeys");
   if (apiKey.createdByUser) {
     const { name, email } = apiKey.createdByUser;
     return (
       <span className="truncate" title={email ?? undefined}>
-        {name ?? email ?? "Unknown user"}
+        {name ?? email ?? t("unknownUser")}
       </span>
     );
   }
@@ -289,7 +300,9 @@ function ApiKeyCreatedBy({ apiKey }: { apiKey: ApiKeyCreator }) {
     return (
       <span
         className="truncate font-mono"
-        title={`Created via API by key ${apiKey.createdByApiKey.publicKey}`}
+        title={t("createdViaApiKey", {
+          publicKey: apiKey.createdByApiKey.publicKey,
+        })}
       >
         {apiKey.createdByApiKey.publicKey}
       </span>
@@ -307,6 +320,7 @@ function ApiKeyNote({
   entityId: string;
   scope: ApiKeyScope;
 }) {
+  const t = useTranslations("accessSettings.apiKeys");
   const utils = api.useUtils();
 
   const hasProjectAccess = useHasProjectAccess({
@@ -368,7 +382,7 @@ function ApiKeyNote({
       onClick={() => setIsEditing(true)}
       className="hover:bg-secondary/50 -mx-2 cursor-pointer rounded px-2 py-1"
     >
-      {note || "Click to add note"}
+      {note || t("clickToAddNote")}
     </div>
   );
 }

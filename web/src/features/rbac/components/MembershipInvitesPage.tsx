@@ -14,6 +14,7 @@ import useSessionStorage from "@/src/components/useSessionStorage";
 import { createDateTableColumn } from "@/src/components/design-system/table/columns/createDateTableColumn";
 import { createUserTableColumn } from "@/src/components/design-system/table/columns/createUserTableColumn";
 import { createTextTableColumn } from "@/src/components/design-system/table/columns/createTextTableColumn";
+import { useTranslations } from "next-intl";
 
 export type InvitesTableRow = {
   email: string;
@@ -36,6 +37,7 @@ export function MembershipInvitesPage({
   orgId: string;
   projectId?: string;
 }) {
+  const t = useTranslations("accessSettings.invites");
   const paginationKey = projectId
     ? `projectInvites_${projectId}_pagination`
     : `orgInvites_${orgId}_pagination`;
@@ -96,43 +98,41 @@ export function MembershipInvitesPage({
   const columns: LangfuseColumnDef<InvitesTableRow>[] = [
     createTextTableColumn<InvitesTableRow>({
       accessorKey: "email",
-      header: "Email",
+      header: t("columns.email"),
     }),
     createTextTableColumn<InvitesTableRow>({
       accessorKey: "orgRole",
-      header: "Organization Role",
+      header: t("columns.organizationRole"),
     }),
     createDateTableColumn<InvitesTableRow>({
       accessorKey: "createdAt",
-      header: "Invited On",
+      header: t("columns.invitedOn"),
     }),
     ...(projectId
       ? [
           createTextTableColumn<InvitesTableRow>({
             accessorKey: "projectRole",
-            header: "Project Role",
+            header: t("columns.projectRole"),
           }),
         ]
       : []),
     createUserTableColumn<InvitesTableRow>({
       accessorKey: "invitedByUser",
-      header: "Invited By",
+      header: t("columns.invitedBy"),
       variant: "avatar",
       emptyValue: "-",
     }),
     {
       accessorKey: "meta",
       id: "meta",
-      header: "Actions",
+      header: t("columns.actions"),
       cell: ({ row }) => {
         const { inviteId } = row.getValue("meta") as InvitesTableRow["meta"];
         return hasCudAccess ? (
           <div className="flex space-x-2">
             <button
               onClick={() => {
-                if (
-                  confirm("Are you sure you want to cancel this invitation?")
-                ) {
+                if (confirm(t("cancelConfirm"))) {
                   mutDeleteInvite.mutate({ inviteId, orgId });
                 }
               }}
@@ -172,7 +172,7 @@ export function MembershipInvitesPage({
   return (
     <>
       {/* Header included in order to hide it when there are not invites yet */}
-      <Header title="Membership Invites" />
+      <Header title={t("title")} />
       <DataTableToolbar columns={columns} tableName="membership-invites" />
       <DataTable
         tableName="membershipInvites"

@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { TriangleAlert } from "lucide-react";
 
 import { PrettyJsonView } from "@/src/components/ui/PrettyJsonView";
@@ -24,6 +25,7 @@ import {
   type PathSegment,
 } from "@/src/features/evals/v2/fns/variableMapping/segmentsToJsonPath";
 import {
+  type CodeEvalTemplateVariable,
   deepParseJsonIterative,
   experimentTargetEvalVariableColumns,
 } from "@langfuse/shared";
@@ -98,12 +100,13 @@ function MappingPreviewSurface({
   children: ReactNode;
   onEdit: () => void;
 }) {
+  const t = useTranslations("evaluationAnalytics.evaluations");
   return (
     <div
       role="button"
       tabIndex={0}
-      aria-label={`Change mapping for {{${variable}}}`}
-      title={`Change mapping for {{${variable}}}`}
+      aria-label={t("variableMapping.changeMappingFor", { variable })}
+      title={t("variableMapping.changeMappingFor", { variable })}
       className="hover:bg-muted/50 focus-visible:ring-ring cursor-pointer rounded-b-md transition-colors focus-visible:ring-2 focus-visible:outline-hidden focus-visible:ring-inset"
       onClick={(event) => {
         if (
@@ -144,6 +147,7 @@ function TreeSelectorBody({
   sourceObject,
   hasMatchingObservations,
   sourceUnavailableMessage,
+  columnLabels,
   onSelect,
   onApplyJsonPath,
 }: {
@@ -153,9 +157,11 @@ function TreeSelectorBody({
   sourceObject: Record<string, unknown> | null;
   hasMatchingObservations: boolean;
   sourceUnavailableMessage?: string;
+  columnLabels: Record<CodeEvalTemplateVariable, string>;
   onSelect: (columnId: string, segments: PathSegment[]) => void;
   onApplyJsonPath: (jsonSelector: string | null) => void;
 }) {
+  const t = useTranslations("evaluationAnalytics.evaluations");
   const [pathEditing, setPathEditing] = useState(false);
   const { selectedColumnId } = fieldState;
 
@@ -166,7 +172,7 @@ function TreeSelectorBody({
     () =>
       experimentTargetEvalVariableColumns.map((column) => ({
         id: column.id,
-        label: column.name,
+        label: columnLabels[column.id] ?? column.name,
         // Keep the top-level columns selectable without a sample so mappings
         // can still be configured before the first matching event exists.
         value: sourceObject
@@ -175,7 +181,7 @@ function TreeSelectorBody({
             : deepParseJsonIterative(sourceObject[column.id])
           : undefined,
       })),
-    [sourceObject],
+    [columnLabels, sourceObject],
   );
   const suggestions = useMemo(
     () =>
@@ -200,7 +206,7 @@ function TreeSelectorBody({
     );
   }
 
-  const treeGuidance = `Click rows to open them — hover one and press "Use" to bind {{${variable}}}.`;
+  const treeGuidance = t("variableMapping.tree.guidance", { variable });
 
   return (
     <>
@@ -208,8 +214,8 @@ function TreeSelectorBody({
         <p className="text-muted-foreground border-b p-3 text-sm">
           {sourceUnavailableMessage ??
             (hasMatchingObservations
-              ? "Loading sample data…"
-              : "No observations match the current rule — mapping can be configured, but JSON paths cannot be validated yet.")}
+              ? t("variableMapping.loadingSampleData")
+              : t("variableMapping.noMatchingObservations"))}
         </p>
       ) : null}
       <div className="flex min-w-0 items-center justify-between gap-2 border-b px-3 py-1.5">
@@ -225,12 +231,12 @@ function TreeSelectorBody({
           disabled={!selectedColumnId}
           title={
             selectedColumnId
-              ? "Enter a raw JSONPath (filters, slices, …)"
-              : "Pick a field in the tree first, then refine it as a path."
+              ? t("variableMapping.enterRawJsonPath")
+              : t("variableMapping.pickFieldFirst")
           }
           onClick={() => setPathEditing(true)}
         >
-          Type a JSONPath instead
+          {t("variableMapping.typeJsonPath")}
         </button>
       </div>
       <SampleDataTreeSelector
@@ -262,6 +268,7 @@ function VariableMappingRow({
   hasMatchingObservations,
   unvalidatedSourceColumnIds,
   sourceUnavailableMessage,
+  columnLabels,
   onChange,
   onDelete,
 }: {
@@ -276,9 +283,11 @@ function VariableMappingRow({
   hasMatchingObservations: boolean;
   unvalidatedSourceColumnIds: string[];
   sourceUnavailableMessage?: string;
+  columnLabels: Record<CodeEvalTemplateVariable, string>;
   onChange: (next: VariableFieldState) => void;
   onDelete?: () => void;
 }) {
+  const t = useTranslations("evaluationAnalytics.evaluations");
   const capture = usePostHogClientCapture();
   const segments = useMemo(
     () =>
@@ -288,7 +297,10 @@ function VariableMappingRow({
     [fieldState.jsonSelector],
   );
 
-  const columnLabel = evalVariableColumnLabel(fieldState.selectedColumnId);
+  const columnLabel = evalVariableColumnLabel(
+    fieldState.selectedColumnId,
+    columnLabels,
+  );
   const validationUnavailable = fieldState.selectedColumnId
     ? unvalidatedSourceColumnIds.includes(fieldState.selectedColumnId)
     : false;
@@ -309,7 +321,7 @@ function VariableMappingRow({
   const warningMessage =
     extracted?.error ??
     (sourceObject && extracted && !extracted.value
-      ? "This mapping is empty in the selected sample."
+      ? t("variableMapping.emptyInSelectedSample")
       : null);
 
   const body = editing ? (
@@ -320,6 +332,7 @@ function VariableMappingRow({
       sourceObject={sourceObject}
       hasMatchingObservations={hasMatchingObservations}
       sourceUnavailableMessage={sourceUnavailableMessage}
+      columnLabels={columnLabels}
       onSelect={(columnId, treeSegments) => {
         const jsonSelector = segmentsToJsonPath(treeSegments);
         if (
@@ -359,16 +372,15 @@ function VariableMappingRow({
       {unmapped ? (
         <div className="text-dark-yellow flex w-full items-start gap-1.5 p-3 text-left text-sm">
           <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
-          {`{{${variable}}} is not mapped yet — click to choose the data it pulls in.`}
+          {t("variableMapping.notMappedYet", { variable })}
         </div>
       ) : !sourceObject ? (
         <p className="text-muted-foreground p-3 text-sm">
-          {sourceUnavailableMessage ??
-            "Pick a sample in the right pane to preview the value this mapping pulls in."}
+          {sourceUnavailableMessage ?? t("variableMapping.pickSampleToPreview")}
         </p>
       ) : validationUnavailable ? (
         <p className="text-muted-foreground p-3 text-sm">
-          No sample value is available to preview this mapping yet.
+          {t("variableMapping.noSampleValueForPreview")}
         </p>
       ) : extracted?.error ? (
         <div className="text-dark-yellow flex items-start gap-1.5 p-3 text-sm">
@@ -377,7 +389,7 @@ function VariableMappingRow({
         </div>
       ) : !extracted?.value ? (
         <p className="text-muted-foreground p-3 text-sm italic">
-          empty in the sample
+          {t("variableMapping.emptyInSample")}
         </p>
       ) : (
         <MappedValuePreview value={extracted.value} />
@@ -430,6 +442,7 @@ export type EditableVariableMappingProps = {
   /** Selected source columns that have no value in this sample and cannot be validated. */
   unvalidatedSourceColumnIds?: string[];
   sourceUnavailableMessage?: string;
+  columnLabels?: Record<CodeEvalTemplateVariable, string>;
 };
 
 export function EditableVariableMapping({
@@ -442,6 +455,7 @@ export function EditableVariableMapping({
   hasMatchingObservations,
   unvalidatedSourceColumnIds = [],
   sourceUnavailableMessage,
+  columnLabels = {} as Record<CodeEvalTemplateVariable, string>,
 }: EditableVariableMappingProps) {
   return (
     <div data-variable-mapping-root="" className="flex flex-col gap-4">
@@ -474,6 +488,7 @@ export function EditableVariableMapping({
           hasMatchingObservations={hasMatchingObservations}
           unvalidatedSourceColumnIds={unvalidatedSourceColumnIds}
           sourceUnavailableMessage={sourceUnavailableMessage}
+          columnLabels={columnLabels}
           onChange={(next) => onChangeField(item.variable, next)}
           onDelete={
             onDeleteVariable ? () => onDeleteVariable(item.variable) : undefined

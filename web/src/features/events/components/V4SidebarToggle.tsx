@@ -20,15 +20,11 @@ import { ZapIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import {
   singleRunToExperimentsUrl,
   toExperimentsResultsUrl,
 } from "@/src/features/experiments/utils/experimentUrlTranslation";
-
-import {
-  V4_PREVIEW_LABEL,
-  V4_PREVIEW_DESCRIPTION,
-} from "@/src/features/events/lib/v4PreviewLabel";
 
 function asSingleValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -163,6 +159,7 @@ function useV4PreviewToggle(source: "sidebar" | "migration_panel") {
 }
 
 export function V4SidebarToggle() {
+  const t = useTranslations("coreDetails.events.v4Preview");
   const {
     isChecked,
     isLoading,
@@ -184,9 +181,9 @@ export function V4SidebarToggle() {
             <Label
               htmlFor="v4-beta-toggle"
               className="block min-w-0 flex-1 cursor-pointer truncate text-sm font-normal"
-              title={V4_PREVIEW_LABEL}
+              title={t("label")}
             >
-              {V4_PREVIEW_LABEL}
+              {t("label")}
             </Label>
           </div>
           <Tooltip>
@@ -198,17 +195,17 @@ export function V4SidebarToggle() {
                   checked={isChecked}
                   onCheckedChange={handleToggle}
                   disabled={isLoading}
-                  aria-label="Toggle V4 Preview"
+                  aria-label={t("toggle")}
                   aria-describedby="v4-preview-sidebar-description"
                 />
               </div>
             </TooltipTrigger>
             <TooltipContent side="right" className="max-w-xs text-xs">
-              {V4_PREVIEW_DESCRIPTION}
+              {t("description")}
             </TooltipContent>
           </Tooltip>
           <span id="v4-preview-sidebar-description" className="sr-only">
-            {V4_PREVIEW_DESCRIPTION}
+            {t("description")}
           </span>
         </div>
       </SidebarMenuButton>
@@ -227,6 +224,7 @@ export function V4SidebarToggle() {
 // see the switched experience immediately.
 export function V4PreviewToggleRow({ projectId }: { projectId?: string }) {
   const router = useRouter();
+  const t = useTranslations("coreDetails.events.v4Preview");
   // Panel and modal can render this row at the same time, so ids must be
   // instance-scoped for the label/description associations to hold.
   const toggleId = useId();
@@ -257,7 +255,7 @@ export function V4PreviewToggleRow({ projectId }: { projectId?: string }) {
           checked={isChecked}
           onCheckedChange={handlePanelToggle}
           disabled={isLoading}
-          aria-label="Toggle V4 Preview"
+          aria-label={t("toggle")}
           aria-describedby={descriptionId}
         />
         <Label
@@ -268,7 +266,7 @@ export function V4PreviewToggleRow({ projectId }: { projectId?: string }) {
           V4
         </Label>
         <span id={descriptionId} className="sr-only">
-          {V4_PREVIEW_DESCRIPTION}
+          {t("description")}
         </span>
       </div>
       <V4IntroDialog

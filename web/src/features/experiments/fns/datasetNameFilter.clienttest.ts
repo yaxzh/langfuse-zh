@@ -80,7 +80,8 @@ describe("folding the legacy dataset column", () => {
     ["ds-judge", "groundedness-judge-calibration"],
   ]);
   const migrate = (filters: FilterState, map = nameById) =>
-    getExperimentsFilterConfig([], map).migrateFilterState!(filters);
+    getExperimentsFilterConfig((columnId) => columnId, [], map)
+      .migrateFilterState!(filters);
 
   const legacy = (...ids: string[]): FilterState => [
     {

@@ -38,6 +38,8 @@ import {
 } from "@langfuse/shared/monitors";
 
 import { MonitorSeverityBadge } from "./MonitorSeverityBadge";
+import { useTranslations } from "next-intl";
+import { useMonitorLabels } from "../helpers/useMonitorLabels";
 
 /** monitorsRefetchInterval keeps the list's severity and paused state current without a manual reload. */
 const monitorsRefetchInterval = 5_000;
@@ -54,6 +56,8 @@ type MonitorsOrderBy = RouterInputs["monitors"]["all"]["orderBy"];
 
 /** MonitorsTable renders the project's monitors as a sortable, filterable, paginated table with row navigation to the edit page. */
 export function MonitorsTable() {
+  const t = useTranslations("operationsUi.monitors.table");
+  const { severityLabel } = useMonitorLabels();
   const router = useRouter();
   const projectId = useProjectIdFromURL() ?? "";
   const utils = api.useUtils();
@@ -70,14 +74,15 @@ export function MonitorsTable() {
     onSuccess: async (_data, variables) => {
       await utils.monitors.invalidate();
       showSuccessToast({
-        title: variables.status === "PAUSED" ? "Alert paused" : "Alert resumed",
+        title:
+          variables.status === "PAUSED" ? t("pausedTitle") : t("resumedTitle"),
         description:
           variables.status === "PAUSED"
-            ? "Evaluations are halted until you resume."
-            : "Evaluations have resumed.",
+            ? t("pausedDescription")
+            : t("resumedDescription"),
       });
     },
-    onError: (e) => showErrorToast("Failed to update alert status", e.message),
+    onError: (e) => showErrorToast(t("updateStatusError"), e.message),
   });
 
   /** paginationState is the bound page index + size, defaulting to 50 per page and synced to the `pageIndex`/`pageSize` URL params. */
@@ -115,12 +120,12 @@ export function MonitorsTable() {
         .toReversed()
         .map((value) => ({
           value,
-          displayValue: value.replace(/_/g, " "),
+          displayValue: severityLabel(value),
         })),
       tags: filterOptions.data?.tags.map((t) => ({ value: t.value })) ?? [],
       evaluatorId: filterOptions.data?.evaluators ?? [],
     }),
-    [filterOptions.data],
+    [filterOptions.data, severityLabel],
   );
 
   const monitorFilterConfig = useMemo(
@@ -128,10 +133,20 @@ export function MonitorsTable() {
       getMonitorFilterConfig((filterOptions.data?.evaluators.length ?? 0) > 0),
     [filterOptions.data?.evaluators.length],
   );
+  const localizedMonitorFilterConfig = useMemo(
+    () => ({
+      ...monitorFilterConfig,
+      facets: monitorFilterConfig.facets.map((facet) => ({
+        ...facet,
+        label: facet.column === "severity" ? t("severity") : t("tags"),
+      })),
+    }),
+    [monitorFilterConfig, t],
+  );
 
   /** queryFilter is the bound sidebar filter state, synced to the URL and to session storage per project. */
   const queryFilter = useSidebarFilterState(
-    monitorFilterConfig,
+    localizedMonitorFilterConfig,
     newFilterOptions,
     {
       loading: filterOptions.isPending,
@@ -165,7 +180,7 @@ export function MonitorsTable() {
   const columns: LangfuseColumnDef<MonitorRow>[] = [
     {
       accessorKey: "severity",
-      header: "Severity",
+      header: t("severity"),
       id: "severity",
       enableSorting: true,
       enableResizing: false,
@@ -179,7 +194,7 @@ export function MonitorsTable() {
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: t("name"),
       id: "name",
       enableSorting: true,
       enableResizing: false,
@@ -199,7 +214,7 @@ export function MonitorsTable() {
       ? [
           {
             accessorKey: "tags",
-            header: "Tags",
+            header: t("tags"),
             id: "tags",
             enableSorting: false,
             enableResizing: false,
@@ -226,7 +241,7 @@ export function MonitorsTable() {
       : []),
     {
       accessorKey: "actions",
-      header: "Actions",
+      header: t("actions"),
       id: "actions",
       enableSorting: false,
       enableResizing: false,
@@ -307,6 +322,7 @@ function MonitorRowActions({
   /** onToggleStatus flips the monitor between ACTIVE and PAUSED. */
   onToggleStatus: () => void;
 }) {
+  const t = useTranslations("operationsUi.monitors.table");
   const isPaused = monitor.status === "PAUSED";
 
   const editButton = (
@@ -315,8 +331,8 @@ function MonitorRowActions({
       variant="ghost"
       size={collapsed ? "default" : "icon"}
       disabled={!hasCUDAccess}
-      aria-label="Edit alert"
-      title="Edit"
+      aria-label={t("editAlert")}
+      title={t("edit")}
       className={cn(!collapsed && rowActionIconColors)}
     >
       <Link
@@ -324,7 +340,7 @@ function MonitorRowActions({
         onClick={(e) => e.stopPropagation()}
       >
         <SquarePen className="h-4 w-4" aria-hidden="true" />
-        {collapsed ? <span className="ml-2">Edit</span> : null}
+        {collapsed ? <span className="ml-2">{t("edit")}</span> : null}
       </Link>
     </Button>
   );
@@ -334,8 +350,8 @@ function MonitorRowActions({
       variant="ghost"
       size={collapsed ? "default" : "icon"}
       disabled={!hasCUDAccess || isStatusPending}
-      aria-label={isPaused ? "Resume alert" : "Pause alert"}
-      title={isPaused ? "Resume" : "Pause"}
+      aria-label={isPaused ? t("resumeAlert") : t("pauseAlert")}
+      title={isPaused ? t("resume") : t("pause")}
       className={cn(!collapsed && rowActionIconColors)}
       onClick={(e) => {
         e.stopPropagation();
@@ -348,7 +364,7 @@ function MonitorRowActions({
         <PauseCircle className="h-4.5 w-4.5" aria-hidden="true" />
       )}
       {collapsed ? (
-        <span className="ml-2">{isPaused ? "Resume" : "Pause"}</span>
+        <span className="ml-2">{isPaused ? t("resume") : t("pause")}</span>
       ) : null}
     </Button>
   );
@@ -360,7 +376,7 @@ function MonitorRowActions({
       isTableAction
       icon={!collapsed}
       variant="ghost"
-      title="Delete"
+      title={t("delete")}
       className={cn(!collapsed && rowActionIconColors)}
     />
   );
@@ -370,7 +386,7 @@ function MonitorRowActions({
       <div onClick={(e) => e.stopPropagation()}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="xs" variant="ghost" aria-label="Alert actions">
+            <Button size="xs" variant="ghost" aria-label={t("alertActions")}>
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>

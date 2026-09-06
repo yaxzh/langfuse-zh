@@ -66,6 +66,8 @@ import { useScheduledDashboardExecuteQuery } from "@/src/features/dashboard/hook
 import { CopyWidgetDialog } from "@/src/features/widgets/components/CopyWidgetDialog";
 import { usePostHogClientCapture } from "@/src/features/posthog-analytics";
 import { Badge } from "@/src/components/ui/badge";
+import { useTranslations } from "next-intl";
+import { getManagedWidgetMessageKey } from "@/src/features/dashboard/lib/managed-dashboard-localization";
 
 export interface WidgetPlacement {
   id: string;
@@ -75,6 +77,42 @@ export interface WidgetPlacement {
   x_size: number;
   y_size: number;
   type: "widget";
+}
+
+const LOCALIZED_METRIC_MEASURES = [
+  "value",
+  "latency",
+  "totalCost",
+  "totalTokens",
+  "inputCost",
+  "outputCost",
+  "timeToFirstToken",
+  "outputTokensPerSecond",
+] as const;
+
+const LOCALIZED_METRIC_AGGREGATIONS = [
+  "sum",
+  "avg",
+  "count",
+  "min",
+  "max",
+  "p50",
+  "p95",
+  "p99",
+] as const;
+
+function isLocalizedMetricMeasure(
+  value: string,
+): value is (typeof LOCALIZED_METRIC_MEASURES)[number] {
+  return LOCALIZED_METRIC_MEASURES.some((measure) => measure === value);
+}
+
+function isLocalizedMetricAggregation(
+  value: string,
+): value is (typeof LOCALIZED_METRIC_AGGREGATIONS)[number] {
+  return LOCALIZED_METRIC_AGGREGATIONS.some(
+    (aggregation) => aggregation === value,
+  );
 }
 
 export function DashboardWidget({
@@ -118,6 +156,12 @@ export function DashboardWidget({
     widget: WidgetExportSource,
   ) => void;
 }) {
+  const t = useTranslations("evaluationAnalytics.widgets");
+  const extrasT = useTranslations("systemUi.widgetExtras");
+  const managedWidgetT = useTranslations(
+    "systemUi.widgetExtras.managedWidgets",
+  );
+  const chartControlsT = useTranslations("systemUi.chartControls");
   const router = useRouter();
   const utils = api.useUtils();
   const capture = usePostHogClientCapture();
@@ -342,6 +386,16 @@ export function DashboardWidget({
       const dimensionField =
         widget.data.dimensions.slice().shift()?.field ?? "none";
       const dimensionValue = item[dimensionField];
+      const localizedMetricName =
+        metric.measure === "count"
+          ? chartControlsT("metrics.count")
+          : isLocalizedMetricMeasure(metric.measure) &&
+              isLocalizedMetricAggregation(metric.agg)
+            ? extrasT("widgetSuggestions.name.metric", {
+                aggregation: chartControlsT(`aggregations.${metric.agg}`),
+                metric: chartControlsT(`metrics.${metric.measure}`),
+              })
+            : formatMetricName(metricField);
 
       // A gap-filled empty bucket arrives as a row with no dimension and the
       // metric column's type default: NULL for nullable aggregations
@@ -380,7 +434,7 @@ export function DashboardWidget({
                 // Objects / numbers / booleans are stringified to avoid React key issues
                 return String(val);
               })()
-            : formatMetricName(metricField),
+            : localizedMetricName,
         metric: Array.isArray(metricValue)
           ? metricValue
           : // On a time series a missing value stays null — the chart renders
@@ -391,7 +445,7 @@ export function DashboardWidget({
         time_dimension: item["time_dimension"],
       };
     });
-  }, [queryResult.data, widget.data]);
+  }, [chartControlsT, extrasT, queryResult.data, widget.data]);
 
   const chartPresentation = useMemo(() => {
     if (!widget.data) {
@@ -522,7 +576,7 @@ export function DashboardWidget({
       });
     },
     onError: (e) => {
-      showErrorToast("Failed to clone widget", e.message);
+      showErrorToast(t("cloneFailed"), e.message);
     },
   });
   const handleCopy = () => {
@@ -540,7 +594,7 @@ export function DashboardWidget({
       onDeleteWidget(placement.id);
       return;
     }
-    if (onDeleteWidget && confirm("Please confirm deletion")) {
+    if (onDeleteWidget && confirm(extrasT("confirmDeletion"))) {
       onDeleteWidget(placement.id);
     }
   };
@@ -548,7 +602,7 @@ export function DashboardWidget({
   if (widget.isPending) {
     return (
       <div className="bg-background flex items-center justify-center rounded-lg border p-4">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">{extrasT("loading")}</div>
       </div>
     );
   }
@@ -556,10 +610,18 @@ export function DashboardWidget({
   if (!widget.data) {
     return (
       <div className="bg-background flex items-center justify-center rounded-lg border p-4">
-        <div className="text-muted-foreground">Widget not found</div>
+        <div className="text-muted-foreground">{t("notFound")}</div>
       </div>
     );
   }
+
+  const managedWidgetMessageKey = getManagedWidgetMessageKey(widget.data);
+  const displayName = managedWidgetMessageKey
+    ? managedWidgetT(`${managedWidgetMessageKey}.name`)
+    : widget.data.name;
+  const displayDescription = managedWidgetMessageKey
+    ? managedWidgetT(`${managedWidgetMessageKey}.description`)
+    : widget.data.description;
 
   // Portable configuration of this widget, used by the copy / download /
   // duplicate menu actions.
@@ -590,11 +652,11 @@ export function DashboardWidget({
         dashboard_id: dashboardId,
       });
       showSuccessToast({
-        title: "Widget copied",
-        description: "Paste it on any dashboard with Cmd/Ctrl+V.",
+        title: extrasT("copiedTitle"),
+        description: extrasT("pasteDescription"),
       });
     } catch {
-      showErrorToast("Copy failed", "Could not write to the clipboard.");
+      showErrorToast(t("copyFailed"), t("clipboardFailed"));
     }
   };
 
@@ -613,7 +675,7 @@ export function DashboardWidget({
         <CopyWidgetDialog
           open={isCopyDialogOpen}
           onOpenChange={setIsCopyDialogOpen}
-          widgetName={widget.data.name}
+          widgetName={displayName}
           onConfirm={handleCopy}
           isPending={copyMutation.isPending}
         />
@@ -621,16 +683,16 @@ export function DashboardWidget({
       <div className="flex items-center justify-between">
         <span
           className="flex min-w-0 items-center gap-1.5 truncate text-base font-bold"
-          title={widget.data.name}
+          title={displayName}
         >
-          <span className="truncate" title={widget.data.name}>
-            {widget.data.name}
+          <span className="truncate" title={displayName}>
+            {displayName}
           </span>
           {dashboardOwner === "PROJECT" && widget.data.owner === "LANGFUSE" && (
             <Badge
               variant="secondary"
               className="shrink-0"
-              title="Maintained by Langfuse — editing creates your own copy"
+              title={t("maintainedCopy")}
             >
               Langfuse
             </Badge>
@@ -647,7 +709,7 @@ export function DashboardWidget({
                 <button
                   onClick={onLockedEditAttempt}
                   className="text-muted-foreground hover:text-foreground hidden group-hover:block"
-                  aria-label="Edit widget"
+                  aria-label={t("edit")}
                 >
                   <PencilIcon size={16} />
                 </button>
@@ -655,7 +717,7 @@ export function DashboardWidget({
                 <button
                   onClick={handleEdit}
                   className="text-muted-foreground hover:text-foreground hidden group-hover:block"
-                  aria-label="Edit widget"
+                  aria-label={t("edit")}
                 >
                   <PencilIcon size={16} />
                 </button>
@@ -669,7 +731,7 @@ export function DashboardWidget({
                     setIsCopyDialogOpen(true);
                   }}
                   className="text-muted-foreground hover:text-foreground hidden group-hover:block"
-                  aria-label="Edit widget"
+                  aria-label={t("edit")}
                 >
                   <PencilIcon size={16} />
                 </button>
@@ -680,7 +742,7 @@ export function DashboardWidget({
             <DropdownMenuTrigger asChild>
               <button
                 className="text-muted-foreground hover:text-foreground hidden group-hover:block data-[state=open]:block"
-                aria-label="Widget actions"
+                aria-label={t("actions")}
               >
                 <MoreVerticalIcon size={16} />
               </button>
@@ -694,12 +756,12 @@ export function DashboardWidget({
                   >
                     <TableIcon className="mr-2 h-4 w-4" />
                     <span className="flex flex-col">
-                      <span>View as table</span>
+                      <span>{t("viewAsTable")}</span>
                       {viewAsTableHint && (
                         <span className="text-muted-foreground text-xs">
-                          {viewAsTableHint.count} filter
-                          {viewAsTableHint.count === 1 ? "" : "s"} not shown in
-                          the table
+                          {extrasT("filtersNotShown", {
+                            count: viewAsTableHint.count,
+                          })}
                         </span>
                       )}
                     </span>
@@ -709,7 +771,7 @@ export function DashboardWidget({
               )}
               <DropdownMenuItem onClick={handleCopyToClipboard}>
                 <CopyIcon className="mr-2 h-4 w-4" />
-                Copy widget
+                {extrasT("copyWidget")}
               </DropdownMenuItem>
               {onDuplicateWidget && (
                 <DropdownMenuItem
@@ -718,13 +780,13 @@ export function DashboardWidget({
                   }
                 >
                   <CopyPlusIcon className="mr-2 h-4 w-4" />
-                  Clone
+                  {extrasT("clone")}
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleDownloadJson}>
                 <FileJsonIcon className="mr-2 h-4 w-4" />
-                Download as JSON
+                {extrasT("downloadJson")}
               </DropdownMenuItem>
               {/* Chart data download needs the query result to have loaded */}
               <DropdownMenuItem
@@ -734,7 +796,7 @@ export function DashboardWidget({
                 }
               >
                 <DownloadIcon className="mr-2 h-4 w-4" />
-                Download data as CSV
+                {extrasT("downloadCsv")}
               </DropdownMenuItem>
               {!readOnly && (hasCUDAccess || isLockedEditable) && (
                 <>
@@ -744,7 +806,7 @@ export function DashboardWidget({
                     className="text-destructive focus:text-destructive"
                   >
                     <TrashIcon className="mr-2 h-4 w-4" />
-                    Delete
+                    {extrasT("delete")}
                   </DropdownMenuItem>
                 </>
               )}
@@ -754,9 +816,9 @@ export function DashboardWidget({
       </div>
       <div
         className="text-muted-foreground mb-4 truncate text-sm"
-        title={widget.data.description}
+        title={displayDescription}
       >
-        {widget.data.description}
+        {displayDescription}
       </div>
       <div className="flex min-h-0 flex-1 flex-col">
         {!queryValidation.valid ? (

@@ -6,12 +6,14 @@ import {
 } from "@/src/components/ui/collapsible";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 export const ExperimentMetadataSection = ({
   metadata,
 }: {
   metadata: Record<string, unknown>;
 }) => {
+  const t = useTranslations("evaluationAnalytics.experiments");
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -22,7 +24,7 @@ export const ExperimentMetadataSection = ({
             type="button"
             className="flex w-full items-center justify-between text-left"
           >
-            <span className="text-sm font-bold">Metadata</span>
+            <span className="text-sm font-bold">{t("overview.metadata")}</span>
             {isOpen ? (
               <ChevronDown className="text-muted-foreground h-4 w-4" />
             ) : (

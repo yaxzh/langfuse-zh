@@ -8,6 +8,7 @@ import { usePostHogClientCapture } from "@/src/features/posthog-analytics";
 import { useAccountV4MigrationData } from "@/src/features/v4-migration/hooks/useV4MigrationData";
 import { getProjectMigrationReadiness } from "@/src/features/v4-migration/migrationData";
 import { env } from "@/src/env.mjs";
+import { useTranslations } from "next-intl";
 
 const V4_DOCS_URL = "https://langfuse.com/docs/v4";
 // Shorter than the Callout default (30d) so the banner resurfaces while the
@@ -52,6 +53,7 @@ export function V4MigrationBanner({
   projectsNeedingMigration: number;
   totalProjects: number;
 }) {
+  const t = useTranslations("remainderUi.migrations");
   const capture = usePostHogClientCapture();
 
   return (
@@ -74,7 +76,7 @@ export function V4MigrationBanner({
                       capture("v4_migration:overview_banner_status_clicked")
                     }
                   >
-                    Check status
+                    {t("banner.checkStatus")}
                   </Link>
                 </Button>
                 <Button asChild size="sm" variant="secondary">
@@ -86,7 +88,7 @@ export function V4MigrationBanner({
                       capture("v4_migration:overview_banner_docs_clicked")
                     }
                   >
-                    Docs
+                    {t("common.docs")}
                   </a>
                 </Button>
               </>
@@ -96,14 +98,15 @@ export function V4MigrationBanner({
             <div className="flex items-start gap-2 sm:items-center">
               <Zap className="mt-0.5 h-4 w-4 shrink-0 sm:mt-0" />
               <span>
-                <span className="font-bold">
-                  Langfuse v4 is here: real-time and up to 165× faster.
-                </span>{" "}
+                <span className="font-bold">{t("banner.title")}</span>{" "}
                 {projectsNeedingMigration === totalProjects
                   ? projectsNeedingMigration === 1
-                    ? "Your project needs an upgrade."
-                    : "All projects need an upgrade."
-                  : `${projectsNeedingMigration} of your ${totalProjects} projects ${projectsNeedingMigration === 1 ? "needs" : "need"} an upgrade.`}
+                    ? t("banner.singleProject")
+                    : t("banner.allProjects")
+                  : t("banner.someProjects", {
+                      count: projectsNeedingMigration,
+                      total: totalProjects,
+                    })}
               </span>
             </div>
           </Callout>

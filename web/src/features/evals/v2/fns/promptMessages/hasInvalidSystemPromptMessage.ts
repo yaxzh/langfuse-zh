@@ -5,6 +5,16 @@ export const EMPTY_PROMPT_MESSAGE_ERROR =
 export const INVALID_SYSTEM_PROMPT_MESSAGE_ERROR =
   "System messages are only allowed as the first prompt message.";
 
+export type PromptMessagesValidationMessages = {
+  emptyPromptMessage: string;
+  invalidSystemPromptMessage: string;
+};
+
+const DEFAULT_MESSAGES: PromptMessagesValidationMessages = {
+  emptyPromptMessage: EMPTY_PROMPT_MESSAGE_ERROR,
+  invalidSystemPromptMessage: INVALID_SYSTEM_PROMPT_MESSAGE_ERROR,
+};
+
 function hasInvalidSystemPromptMessage(
   messages: EvaluatorPromptMessage[],
 ): boolean {
@@ -19,10 +29,13 @@ function hasEmptyPromptMessage(messages: EvaluatorPromptMessage[]): boolean {
 
 export function getPromptMessagesValidationError(
   messages: EvaluatorPromptMessage[],
+  validationMessages: PromptMessagesValidationMessages = DEFAULT_MESSAGES,
 ): string | null {
-  if (hasEmptyPromptMessage(messages)) return EMPTY_PROMPT_MESSAGE_ERROR;
+  if (hasEmptyPromptMessage(messages)) {
+    return validationMessages.emptyPromptMessage;
+  }
   if (hasInvalidSystemPromptMessage(messages)) {
-    return INVALID_SYSTEM_PROMPT_MESSAGE_ERROR;
+    return validationMessages.invalidSystemPromptMessage;
   }
   return null;
 }

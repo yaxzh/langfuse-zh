@@ -81,6 +81,12 @@ const ValidConfigResponse = z.object({
 const InvalidConfigResponse = z.object({
   isValid: z.literal(false),
   message: z.string(),
+  code: z.enum([
+    "PROMPT_NOT_FOUND",
+    "PROMPT_HAS_NO_VARIABLES",
+    "DATASET_EMPTY",
+    "DATASET_ITEMS_HAVE_NO_VARIABLES",
+  ]),
 });
 
 const ConfigResponse = z.discriminatedUnion("isValid", [
@@ -149,7 +155,8 @@ export const experimentsRouter = createTRPCRouter({
       if (!prompt) {
         return {
           isValid: false,
-          message: "Selected prompt not found.",
+          code: "PROMPT_NOT_FOUND",
+          message: "prompt_not_found",
         };
       }
 
@@ -159,7 +166,8 @@ export const experimentsRouter = createTRPCRouter({
       if (!resolvedPrompt) {
         return {
           isValid: false,
-          message: "Selected prompt not found.",
+          code: "PROMPT_NOT_FOUND",
+          message: "prompt_not_found",
         };
       }
 
@@ -183,7 +191,8 @@ export const experimentsRouter = createTRPCRouter({
       if (!Boolean(allVariables.length)) {
         return {
           isValid: false,
-          message: "Selected prompt has no variables or placeholders.",
+          code: "PROMPT_HAS_NO_VARIABLES",
+          message: "prompt_has_no_variables",
         };
       }
 
@@ -199,7 +208,8 @@ export const experimentsRouter = createTRPCRouter({
       if (!Boolean(items.length)) {
         return {
           isValid: false,
-          message: "Selected dataset is empty or all items are inactive.",
+          code: "DATASET_EMPTY",
+          message: "dataset_empty",
         };
       }
 
@@ -208,7 +218,8 @@ export const experimentsRouter = createTRPCRouter({
       if (!Boolean(Object.keys(variablesMap).length)) {
         return {
           isValid: false,
-          message: "No dataset item contains any variables.",
+          code: "DATASET_ITEMS_HAVE_NO_VARIABLES",
+          message: "dataset_items_have_no_variables",
         };
       }
 
@@ -223,15 +234,15 @@ export const experimentsRouter = createTRPCRouter({
     .input(
       z.object({
         projectId: z.string(),
-        name: z.string().min(1, "Please enter an experiment name"),
-        runName: z.string().min(1, "Run name is required"),
-        promptId: z.string().min(1, "Please select a prompt"),
-        datasetId: z.string().min(1, "Please select a dataset"),
+        name: z.string().min(1),
+        runName: z.string().min(1),
+        promptId: z.string().min(1),
+        datasetId: z.string().min(1),
         datasetVersion: z.coerce.date().optional(),
         description: z.string().max(1000).optional(),
         modelConfig: z.object({
-          provider: z.string().min(1, "Please select a provider"),
-          model: z.string().min(1, "Please select a model"),
+          provider: z.string().min(1),
+          model: z.string().min(1),
           modelParams: ZodModelConfig,
         }),
         structuredOutputSchema: z.record(z.string(), z.any()).optional(),

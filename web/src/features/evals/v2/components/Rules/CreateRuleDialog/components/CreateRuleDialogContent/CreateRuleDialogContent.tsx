@@ -1,6 +1,7 @@
 import { showSuccessToast } from "@/src/features/notifications";
 import type { EvalTargetObject, FilterState } from "@langfuse/shared";
 import { useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogBody,
@@ -50,6 +51,7 @@ export function CreateRuleDialogContent({
   successNotification: "toast" | "none";
   onEvaluatorSearchChange: (search: string) => void;
 }) {
+  const t = useTranslations("evaluationAnalytics.evaluations");
   const capture = usePostHogClientCapture();
   const utils = api.useUtils();
   const { isLangfuseCloud } = useLangfuseCloudRegion();
@@ -120,8 +122,10 @@ export function CreateRuleDialogContent({
     });
     if (successNotification === "toast") {
       showSuccessToast({
-        title: "Rule created",
-        description: `${rule.name} is active.`,
+        title: t("rules.notifications.createdTitle"),
+        description: t("rules.notifications.createdDescription", {
+          name: rule.name,
+        }),
       });
     }
     await Promise.all([
@@ -153,10 +157,8 @@ export function CreateRuleDialogContent({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="xl" className="max-w-6xl" closeOnInteractionOutside>
         <DialogHeader>
-          <DialogTitle>New rule</DialogTitle>
-          <DialogDescription>
-            Select which incoming observations should trigger evaluators.
-          </DialogDescription>
+          <DialogTitle>{t("rules.create.title")}</DialogTitle>
+          <DialogDescription>{t("rules.create.description")}</DialogDescription>
         </DialogHeader>
         <DialogBody>
           <RuleSetup

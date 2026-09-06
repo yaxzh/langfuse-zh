@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { DataTable } from "@/src/components/table/data-table";
 import {
   DataTableControlsProvider,
@@ -63,6 +64,8 @@ function createRow(
 }
 
 export function PromptTable() {
+  const t = useTranslations("productTables.prompts");
+  const td = useTranslations("coreDetails.prompts.detail");
   const projectId = useProjectIdFromURL() ?? "";
   const { setDetailPageList } = useDetailPageLists();
   const promptMetricsTimeWindow = useMemo(() => {
@@ -271,7 +274,7 @@ export function PromptTable() {
   const promptColumns: LangfuseColumnDef<PromptTableRow>[] = [
     createFolderKeyTableColumn<PromptTableRow>({
       accessorKey: "name",
-      header: "Name",
+      header: t("columns.name"),
       enableSorting: true,
       size: 250,
       getCell: (name, { row }) => {
@@ -298,7 +301,7 @@ export function PromptTable() {
     }),
     createNumberTableColumn<PromptTableRow>({
       accessorKey: "version",
-      header: "Versions",
+      header: t("columns.versions"),
       enableSorting: true,
       size: 70,
       formatter: (value) => String(value),
@@ -309,13 +312,13 @@ export function PromptTable() {
     }),
     createTextTableColumn<PromptTableRow>({
       accessorKey: "type",
-      header: "Type",
+      header: t("columns.type"),
       enableSorting: true,
       size: 60,
     }),
     createDateTableColumn({
       accessorKey: "createdAt",
-      header: "Latest Version Created At",
+      header: t("columns.latestCreatedAt"),
       enableSorting: true,
       size: 200,
       getValue: (value, context) => {
@@ -328,7 +331,7 @@ export function PromptTable() {
     }),
     {
       accessorKey: "numberOfObservations",
-      header: "Number of Observations (7d)",
+      header: t("columns.observations7d"),
       id: "numberOfObservations",
       size: 170,
       cell: ({ getValue, row }) => {
@@ -354,7 +357,7 @@ export function PromptTable() {
     },
     {
       accessorKey: "tags",
-      header: "Tags",
+      header: t("columns.tags"),
       id: "tags",
       enableSorting: true,
       size: 120,
@@ -385,7 +388,7 @@ export function PromptTable() {
     {
       accessorKey: "id",
       id: "actions",
-      header: "Actions",
+      header: t("columns.actions"),
       size: 70,
       enableSorting: false,
       cell: ({ row }) => {
@@ -424,15 +427,15 @@ export function PromptTable() {
           filterState={queryFilter.filterState}
           columnsWithCustomSelect={["labels", "tags"]}
           searchConfig={{
-            metadataSearchFields: ["Name", "Tags", "Content"],
+            metadataSearchFields: [td("name"), td("tags"), td("content")],
             updateQuery: useDebounce(setSearchQuery, 300),
             currentQuery: searchQuery ?? undefined,
             tableAllowsFullTextSearch: true,
             setSearchType,
             searchType,
             customDropdownLabels: {
-              metadata: "Names, Tags",
-              fullText: "Full Text",
+              metadata: t("searchFields"),
+              fullText: t("fullText"),
             },
             hidePerformanceWarning: true,
             availableSearchTypes: {

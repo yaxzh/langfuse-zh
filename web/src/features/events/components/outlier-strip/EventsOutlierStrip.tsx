@@ -38,6 +38,7 @@ import {
   type OutlierStripSettings,
 } from "./lib/useOutlierStripSettings";
 import { canApplyOutlierStripFilters } from "./lib/filterCompatibility";
+import { useTranslations } from "next-intl";
 
 /**
  * Production container for the outlier strip ("Pulse") above the events table
@@ -60,9 +61,6 @@ const BAR_SLOT_TARGET_PX = 5;
 type StripMode = OutlierStripSettings["mode"];
 
 const MODE_OPTIONS: StripMode[] = ["count", "cost", "latency"];
-
-const modeLabel = (mode: StripMode): string =>
-  OUTLIER_STRIP_METRICS[mode].shortLabel;
 
 const AggDropdownController = ({
   children,
@@ -104,10 +102,12 @@ const ModeDropdownController = ({
   children,
   options,
   onChange,
+  getLabel,
 }: {
   children: React.ComponentProps<typeof DropdownMenuController>["children"];
   options: StripMode[];
   onChange: (mode: StripMode) => void;
+  getLabel: (mode: StripMode) => string;
 }) => {
   const focusGuard = usePointerSelectionFocusGuard();
   return (
@@ -125,7 +125,7 @@ const ModeDropdownController = ({
               }}
               className="text-xs"
             >
-              {modeLabel(mode)}
+              {getLabel(mode)}
             </DropdownMenuItem>
           ))}
         </>
@@ -152,6 +152,12 @@ export function EventsOutlierStrip({
   searchIgnored?: boolean;
   onSelectRange: (range: { from: Date; to: Date }) => void;
 }) {
+  const t = useTranslations("coreObservability.events");
+  const modeLabels: Record<StripMode, string> = {
+    count: t("modes.count"),
+    cost: t("modes.cost"),
+    latency: t("modes.latency"),
+  };
   const capture = usePostHogClientCapture();
   const [wrapperRef, size] = useElementSize<HTMLDivElement>();
   // Transient drag selection (LFE-14532, Grafana-style). Window-keyed: a
@@ -361,12 +367,13 @@ export function EventsOutlierStrip({
       <ModeDropdownController
         options={MODE_OPTIONS}
         onChange={handleModeChange}
+        getLabel={(option) => modeLabels[option]}
       >
         {({ Trigger }) => (
           <Trigger asChild>
             <MetricStripTrigger
-              ariaLabel={`Chart mode: ${modeLabel(mode)}`}
-              label={modeLabel(mode)}
+              ariaLabel={t("chartMode", { mode: modeLabels[mode] })}
+              label={modeLabels[mode]}
               variant="metric"
             />
           </Trigger>
@@ -385,7 +392,9 @@ export function EventsOutlierStrip({
             <span className="flex items-baseline gap-1">
               <Trigger asChild>
                 <MetricStripTrigger
-                  ariaLabel={`${def.shortLabel} aggregation: ${aggregation}`}
+                  ariaLabel={t("chartMode", {
+                    mode: `${modeLabels[mode]} ${aggregation}`,
+                  })}
                   label={aggregation}
                   variant="aggregation"
                 />
@@ -404,6 +413,7 @@ export function EventsOutlierStrip({
       // measurement would flash a skeleton sized for nothing.
       measured={size !== undefined}
       status={status}
+      emptyMessage={t("noData")}
       // Dim held-over bins during a refetch (filter change, saved-view
       // switch, drill-in) — stale data must not read as current.
       stale={queryResult.isPlaceholderData && queryResult.isFetching}
@@ -418,7 +428,7 @@ export function EventsOutlierStrip({
           stepMs={stepMs}
           metric={mode}
           widthPx={chartWidth}
-          disabledReason="Chart unavailable for the current filters"
+          disabledReason={t("chartUnavailableForFilters")}
         />
       ) : (
         <OutlierBarStrip

@@ -1,4 +1,4 @@
-import { render, renderHook, screen } from "@testing-library/react";
+import { renderHook, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -6,6 +6,7 @@ import {
   useV4MigrationBannerState,
 } from "./V4MigrationBanner";
 import { type ProjectMigrationStatus } from "./migrationData";
+import { render } from "./test-utils";
 
 const mocks = vi.hoisted(() => ({
   statusByProjectId: new Map<string, ProjectMigrationStatus>(),

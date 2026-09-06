@@ -6,15 +6,21 @@
 
 import { Badge } from "@/src/components/design-system/Badge/Badge";
 import { formatIntervalSeconds } from "@/src/utils/dates";
+import { useTranslations } from "next-intl";
 
 export function LatencyBadge({
   latencySeconds,
 }: {
   latencySeconds: number | null;
 }) {
+  const t = useTranslations("coreDetails.traces.detailControls");
   if (latencySeconds == null) return null;
 
-  return <Badge text={`Latency: ${formatIntervalSeconds(latencySeconds)}`} />;
+  return (
+    <Badge
+      text={t("latency", { value: formatIntervalSeconds(latencySeconds) })}
+    />
+  );
 }
 
 export function TimeToFirstTokenBadge({
@@ -22,11 +28,14 @@ export function TimeToFirstTokenBadge({
 }: {
   timeToFirstToken: number | null | undefined;
 }) {
+  const t = useTranslations("coreDetails.traces.detailControls");
   if (timeToFirstToken == null) return null;
 
   return (
     <Badge
-      text={`Time to first token: ${formatIntervalSeconds(timeToFirstToken)}`}
+      text={t("timeToFirstToken", {
+        value: formatIntervalSeconds(timeToFirstToken),
+      })}
     />
   );
 }
@@ -36,9 +45,10 @@ export function EnvironmentBadge({
 }: {
   environment: string | null | undefined;
 }) {
+  const t = useTranslations("coreDetails.traces.detailControls");
   if (!environment) return null;
 
-  return <Badge text={`Env: ${environment}`} />;
+  return <Badge text={t("environment", { value: environment })} />;
 }
 
 export function ReleaseBadge({
@@ -46,9 +56,10 @@ export function ReleaseBadge({
 }: {
   release: string | null | undefined;
 }) {
+  const t = useTranslations("coreDetails.traces.detailControls");
   if (!release) return null;
 
-  return <Badge text={`Release: ${release}`} />;
+  return <Badge text={t("release", { value: release })} />;
 }
 
 export function VersionBadge({
@@ -56,7 +67,8 @@ export function VersionBadge({
 }: {
   version: string | null | undefined;
 }) {
+  const t = useTranslations("coreDetails.traces.detailControls");
   if (!version) return null;
 
-  return <Badge text={`Version: ${version}`} />;
+  return <Badge text={t("version", { value: version })} />;
 }

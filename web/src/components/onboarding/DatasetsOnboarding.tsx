@@ -6,41 +6,40 @@ import { ButtonWithIcon } from "@/src/components/ButtonWithIcon";
 import { DialogTrigger } from "@/src/components/ui/dialog";
 import { CreateDatasetDialogController } from "@/src/features/datasets/components/CreateDatasetDialogController";
 import { Database, Beaker, Zap, Code, LockIcon, PlusIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export function DatasetsOnboarding({ projectId }: { projectId: string }) {
+  const t = useTranslations("sharedUi.onboarding");
   const valuePropositions: ValueProposition[] = [
     {
-      title: "Continuous improvement",
-      description:
-        "Create datasets from production edge cases to improve your application",
+      title: t("datasets.improvementTitle"),
+      description: t("datasets.improvementDescription"),
       icon: Zap,
     },
     {
-      title: "Pre-deployment testing",
-      description: "Benchmark new releases before deploying to production",
+      title: t("datasets.testingTitle"),
+      description: t("datasets.testingDescription"),
       icon: Beaker,
     },
     {
-      title: "Structured testing",
-      description:
-        "Run experiments on collections of inputs and expected outputs",
+      title: t("datasets.structuredTitle"),
+      description: t("datasets.structuredDescription"),
       icon: Database,
     },
     {
-      title: "Custom workflows",
-      description:
-        "Build custom workflows around your datasets via the API and SDKs, e.g. for fine-tuning, few-shotting",
+      title: t("datasets.workflowsTitle"),
+      description: t("datasets.workflowsDescription"),
       icon: Code,
     },
   ];
 
   return (
     <SplashScreen
-      title="Get Started with Datasets & Experiments"
-      description="Datasets in Langfuse are collections of inputs (and expected outputs) for your LLM application. You can run Experiments against these datasets to test new releases before deployment to production."
+      title={t("datasets.title")}
+      description={t("datasets.description")}
       valuePropositions={valuePropositions}
       primaryAction={{
-        label: "Create Dataset",
+        label: t("datasets.create"),
         component: (
           <CreateDatasetDialogController
             projectId={projectId}
@@ -54,7 +53,7 @@ export function DatasetsOnboarding({ projectId }: { projectId: string }) {
                   onClick={openDialog}
                   variant="default"
                   icon={disabled === undefined ? PlusIcon : LockIcon}
-                  text="New dataset"
+                  text={t("datasets.new")}
                 />
               </DialogTrigger>
             )}
@@ -62,7 +61,7 @@ export function DatasetsOnboarding({ projectId }: { projectId: string }) {
         ),
       }}
       secondaryAction={{
-        label: "Learn More",
+        label: t("learnMore"),
         href: "https://langfuse.com/docs/datasets",
       }}
       videoSrc="https://static.langfuse.com/prod-assets/onboarding/datasets-overview-v1.mp4"

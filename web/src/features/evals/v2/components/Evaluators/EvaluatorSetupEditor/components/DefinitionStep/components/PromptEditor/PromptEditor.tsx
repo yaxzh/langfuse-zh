@@ -1,4 +1,5 @@
 import { Fragment, useState, type CSSProperties } from "react";
+import { useTranslations } from "next-intl";
 import {
   Check,
   ChevronDown,
@@ -87,6 +88,7 @@ export function PromptEditorContent({
   store: EvaluatorSetupStore;
   sampleObject: Record<string, unknown> | null;
 }) {
+  const t = useTranslations("evaluationAnalytics.evaluations");
   const state = useStore(
     store,
     useShallow((state) => ({
@@ -105,6 +107,27 @@ export function PromptEditorContent({
     variableFields: state.variableFields,
     promptPreviewEnabled: state.promptPreviewEnabled,
     sampleObject,
+    columnLabels: {
+      input: t("variableMapping.columns.input"),
+      output: t("variableMapping.columns.output"),
+      metadata: t("variableMapping.columns.metadata"),
+      toolCalls: t("variableMapping.columns.toolCalls"),
+      experimentItemExpectedOutput: t(
+        "variableMapping.columns.experimentItemExpectedOutput",
+      ),
+      experimentItemMetadata: t(
+        "variableMapping.columns.experimentItemMetadata",
+      ),
+    },
+    messages: {
+      notMapped: t("variableMapping.prompt.notMapped"),
+      emptyMapping: t("variableMapping.prompt.emptyMapping"),
+      sampleRequired: t("variableMapping.prompt.sampleRequired"),
+      mapVariable: (variable) =>
+        t("variableMapping.prompt.mapVariable", { variable }),
+      fixVariable: (variable) =>
+        t("variableMapping.prompt.fixVariable", { variable }),
+    },
   });
   const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
   const activeMessageIndex = activeMessageId

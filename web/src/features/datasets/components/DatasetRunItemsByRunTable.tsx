@@ -26,6 +26,7 @@ import { createDateTableColumn } from "@/src/components/design-system/table/colu
 import { createNumberTableColumn } from "@/src/components/design-system/table/columns/createNumberTableColumn";
 import { useQueryFilterState } from "@/src/features/filters/hooks/useFilterState";
 import { useDebounce } from "@/src/hooks/useDebounce";
+import { useTranslations } from "next-intl";
 
 export function DatasetRunItemsByRunTable(props: {
   projectId: string;
@@ -33,6 +34,7 @@ export function DatasetRunItemsByRunTable(props: {
   datasetRunId: string;
   datasetVersion?: Date | null;
 }) {
+  const t = useTranslations("coreDetails.datasets.tables");
   const { projectId, datasetId, datasetRunId, datasetVersion } = props;
   const { setDetailPageList } = useDetailPageLists();
   const [paginationState, setPaginationState] = useQueryParams({
@@ -102,7 +104,7 @@ export function DatasetRunItemsByRunTable(props: {
   const columns: LangfuseColumnDef<DatasetRunItemByRunRowData>[] = [
     createLinkTableColumn<DatasetRunItemByRunRowData>({
       accessorKey: "datasetItemId",
-      header: "Dataset Item",
+      header: t("datasetItem"),
       size: 110,
       isPinnedLeft: true,
       getCell: (datasetItemId) => {
@@ -122,7 +124,7 @@ export function DatasetRunItemsByRunTable(props: {
     }),
     createDateTableColumn<DatasetRunItemByRunRowData>({
       accessorKey: "runAt",
-      header: "Run At",
+      header: t("runAt"),
       size: 150,
     }),
     createLinkTableColumn<
@@ -130,7 +132,7 @@ export function DatasetRunItemsByRunTable(props: {
       DatasetRunItemByRunRowData["trace"]
     >({
       accessorKey: "trace",
-      header: "Trace",
+      header: t("trace"),
       size: 60,
       getCell: (trace) => {
         if (!trace) return undefined;
@@ -139,7 +141,10 @@ export function DatasetRunItemsByRunTable(props: {
             type: "link",
             props: {
               path: `/project/${projectId}/traces/${encodeURIComponent(trace.traceId)}?observation=${encodeURIComponent(trace.observationId)}`,
-              value: `Trace: ${trace.traceId}, Observation: ${trace.observationId}`,
+              value: t("traceAndObservation", {
+                trace: trace.traceId,
+                observation: trace.observationId,
+              }),
               icon: ListTree,
             },
           };
@@ -148,7 +153,7 @@ export function DatasetRunItemsByRunTable(props: {
           type: "link",
           props: {
             path: `/project/${projectId}/traces/${encodeURIComponent(trace.traceId)}`,
-            value: `Trace: ${trace.traceId}`,
+            value: t("traceValue", { trace: trace.traceId }),
             icon: ListTree,
           },
         };
@@ -156,7 +161,7 @@ export function DatasetRunItemsByRunTable(props: {
     }),
     {
       accessorKey: "latency",
-      header: "Latency",
+      header: t("latency"),
       id: "latency",
       size: 70,
       enableHiding: true,
@@ -175,7 +180,7 @@ export function DatasetRunItemsByRunTable(props: {
     }),
     {
       accessorKey: "scores",
-      header: "Scores",
+      header: t("scores"),
       id: "scores",
       enableHiding: true,
       defaultHidden: true,
@@ -186,7 +191,7 @@ export function DatasetRunItemsByRunTable(props: {
     },
     {
       accessorKey: "input",
-      header: "Trace Input",
+      header: t("traceInput"),
       id: "input",
       size: 200,
       enableHiding: true,
@@ -210,7 +215,7 @@ export function DatasetRunItemsByRunTable(props: {
     },
     {
       accessorKey: "output",
-      header: "Output",
+      header: t("output"),
       id: "output",
       size: 200,
       enableHiding: true,
@@ -234,7 +239,7 @@ export function DatasetRunItemsByRunTable(props: {
     },
     {
       accessorKey: "expectedOutput",
-      header: "Expected Output",
+      header: t("expectedOutput"),
       id: "expectedOutput",
       size: 200,
       enableHiding: true,

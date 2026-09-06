@@ -4,6 +4,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { usePostHogClientCapture } from "@/src/features/posthog-analytics";
 import { env } from "@/src/env.mjs";
+import { useTranslations } from "next-intl";
 
 export function RequestResetPasswordEmailButton({
   email,
@@ -20,6 +21,7 @@ export function RequestResetPasswordEmailButton({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const session = useSession();
   const capture = usePostHogClientCapture();
+  const t = useTranslations("auth");
   const isValidEmail = z.email().safeParse(email).success;
 
   const handleResetPassword = async () => {
@@ -39,15 +41,15 @@ export function RequestResetPasswordEmailButton({
       if (res?.error) {
         setErrorMessage(
           res.error === "AccessDenied"
-            ? "This email is not associated with any account."
-            : res.error,
+            ? t("passwordReset.accessDenied")
+            : t("common.unexpectedError"),
         );
       } else if (res?.ok) {
         onEmailSent();
       }
     } catch (error) {
       console.error("Error sending reset password email:", error);
-      setErrorMessage("An unexpected error occurred. Please try again.");
+      setErrorMessage(t("common.unexpectedError"));
     } finally {
       setIsLoading(false);
     }
@@ -64,8 +66,8 @@ export function RequestResetPasswordEmailButton({
       >
         {label ??
           (session.status === "authenticated"
-            ? "Send verification code"
-            : "Request password reset")}
+            ? t("verification.verifyToChange")
+            : t("passwordReset.request"))}
       </Button>
       {errorMessage && (
         <div className="text-destructive mt-3 text-center text-sm">

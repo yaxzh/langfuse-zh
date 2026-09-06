@@ -5,6 +5,7 @@ import { cva } from "class-variance-authority";
 import { X } from "lucide-react";
 
 import { Button } from "@/src/components/ui/button";
+import { useSharedUiTranslations } from "@/src/utils/shared-ui-translations";
 
 const calloutVariants = cva("relative w-full rounded-lg border p-3", {
   variants: {
@@ -52,6 +53,7 @@ export function Callout({
   actions,
   onDismiss,
 }: CalloutProps) {
+  const t = useSharedUiTranslations("accessibility");
   return (
     <div role="alert" className={calloutVariants({ variant })}>
       <div className={descriptionVariants({ align })}>
@@ -70,7 +72,7 @@ export function Callout({
           size="sm"
           onClick={onDismiss}
           className="text-muted-foreground hover:text-foreground h-6 w-6 shrink-0 p-0"
-          aria-label="Dismiss"
+          aria-label={t("dismiss")}
         >
           <X className="h-4 w-4" />
         </Button>

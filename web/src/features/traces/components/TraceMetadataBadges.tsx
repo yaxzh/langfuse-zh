@@ -9,6 +9,7 @@
 import Link from "next/link";
 import { ExternalLinkIcon } from "lucide-react";
 import { Badge } from "@/src/components/design-system/Badge/Badge";
+import { useTranslations } from "next-intl";
 
 export function SessionBadge({
   sessionId,
@@ -17,9 +18,10 @@ export function SessionBadge({
   sessionId: string | null;
   projectId: string;
 }) {
+  const t = useTranslations("coreDetails.traces.detailControls");
   if (!sessionId) return null;
 
-  const text = `Session: ${sessionId}`;
+  const text = t("session", { value: sessionId });
 
   return (
     <Link
@@ -38,9 +40,10 @@ export function UserIdBadge({
   userId: string | null;
   projectId: string;
 }) {
+  const t = useTranslations("coreDetails.traces.detailControls");
   if (!userId) return null;
 
-  const text = `User ID: ${userId}`;
+  const text = t("userId", { value: userId });
 
   return (
     <Link
@@ -59,9 +62,10 @@ export function TargetTraceBadge({
   targetTraceId: string | null;
   projectId: string;
 }) {
+  const t = useTranslations("coreDetails.traces.detailControls");
   if (!targetTraceId) return null;
 
-  const text = `Target Trace: ${targetTraceId}`;
+  const text = t("targetTrace", { value: targetTraceId });
 
   return (
     <Link
@@ -78,16 +82,19 @@ export function EnvironmentBadge({
 }: {
   environment: string | null;
 }) {
+  const t = useTranslations("coreDetails.traces.detailControls");
   if (!environment) return null;
-  return <Badge text={`Env: ${environment}`} />;
+  return <Badge text={t("environment", { value: environment })} />;
 }
 
 export function ReleaseBadge({ release }: { release: string | null }) {
+  const t = useTranslations("coreDetails.traces.detailControls");
   if (!release) return null;
-  return <Badge text={`Release: ${release}`} />;
+  return <Badge text={t("release", { value: release })} />;
 }
 
 export function VersionBadge({ version }: { version: string | null }) {
+  const t = useTranslations("coreDetails.traces.detailControls");
   if (!version) return null;
-  return <Badge text={`Version: ${version}`} />;
+  return <Badge text={t("version", { value: version })} />;
 }

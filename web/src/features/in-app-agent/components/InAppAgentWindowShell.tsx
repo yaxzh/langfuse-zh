@@ -8,6 +8,7 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
+import { useSharedUiTranslations } from "@/src/utils/shared-ui-translations";
 
 import {
   MovableResizablePanel,
@@ -138,6 +139,7 @@ export function InAppAgentWindowShell({
   open,
   panelRef,
 }: InAppAgentWindowShellProps) {
+  const t = useSharedUiTranslations("agent");
   const isHandheld = useIsHandheld();
   // State, not a ref: the drawer portals into its layer container, which itself
   // resolves in an effect, so the node arrives a commit late and has to be the
@@ -193,7 +195,7 @@ export function InAppAgentWindowShell({
             onClose();
           }}
         >
-          <DrawerTitle className="sr-only">Assistant</DrawerTitle>
+          <DrawerTitle className="sr-only">{t("assistant")}</DrawerTitle>
           {children({ isHeaderDragHandleEnabled: false })}
         </DrawerContent>
       </Drawer>

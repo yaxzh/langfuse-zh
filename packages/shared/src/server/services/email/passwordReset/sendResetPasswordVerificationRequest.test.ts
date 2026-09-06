@@ -38,9 +38,10 @@ function verificationRequestParams(
   } as unknown as SendVerificationRequestParams;
 }
 
-async function sentMail(callbackUrl: string) {
+async function sentMail(callbackUrl: string, locale: "en" | "zh-CN" = "en") {
   await sendResetPasswordVerificationRequest(
     verificationRequestParams(callbackUrl),
+    locale,
   );
   expect(sendMail).toHaveBeenCalledTimes(1);
   return sendMail.mock.calls[0][0] as {
@@ -79,6 +80,32 @@ describe("sendResetPasswordVerificationRequest", () => {
     expect(mail.subject).toBe("Your Langfuse password reset code");
     expect(mail.text).toContain("reset your Langfuse password");
     expect(mail.html).toContain("Forgot your Langfuse password?");
+  });
+
+  it("sends Simplified Chinese email verification copy", async () => {
+    const mail = await sentMail(
+      "http://localhost:3000/auth/setup-password",
+      "zh-CN",
+    );
+
+    expect(mail.subject).toBe("验证您的 Langfuse 邮箱");
+    expect(mail.text).toContain("请使用以下验证码验证您的邮箱：123456");
+    expect(mail.html).toContain("验证邮箱即可开始使用。");
+    expect(mail.html).toContain('lang="zh-CN"');
+  });
+
+  it("sends Simplified Chinese password reset copy", async () => {
+    const mail = await sentMail(
+      "http://localhost:3000/auth/reset-password",
+      "zh-CN",
+    );
+
+    expect(mail.subject).toBe("您的 Langfuse 密码重置验证码");
+    expect(mail.text).toContain(
+      "请使用以下验证码重置您的 Langfuse 密码：123456",
+    );
+    expect(mail.html).toContain("忘记了 Langfuse 密码？");
+    expect(mail.html).toContain('lang="zh-CN"');
   });
 
   it("falls back to password reset copy when no callback URL is present", async () => {

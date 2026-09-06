@@ -1,4 +1,5 @@
 import { BotMessageSquare, X } from "lucide-react";
+import { useSharedUiTranslations } from "@/src/utils/shared-ui-translations";
 
 import { Button } from "@/src/components/ui/button";
 import { cn } from "@/src/utils/tailwind";
@@ -12,21 +13,24 @@ export type InAppAgentActivityCard = {
   state: Exclude<InAppAgentActivityState, "running">;
 };
 
-function getCardCopy(state: InAppAgentActivityCard["state"]) {
+function getCardCopy(
+  state: InAppAgentActivityCard["state"],
+  labels: { approval: string; failed: string; finished: string },
+) {
   // Lead with "Assistant" so the toast reads as the same product as the
   // launcher (BotMessageSquare), not a generic system alert.
   if (state === "approval") {
     return {
-      label: "Assistant needs your approval",
+      label: labels.approval,
       tone: "accent" as const,
     };
   }
 
   if (state === "failed-unread") {
-    return { label: "Assistant run failed", tone: "destructive" as const };
+    return { label: labels.failed, tone: "destructive" as const };
   }
 
-  return { label: "Assistant finished", tone: "accent" as const };
+  return { label: labels.finished, tone: "accent" as const };
 }
 
 /** Pure floating stack: ordering/cap live here; callers own delivery lifecycle. */
@@ -39,11 +43,18 @@ export function InAppAgentActivityCards({
   onOpen: (card: InAppAgentActivityCard) => void;
   onDismiss: (card: InAppAgentActivityCard) => void;
 }) {
+  const t = useSharedUiTranslations("agent");
+
   return (
     <div className="top-banner-offset pointer-events-none fixed right-4 flex w-80 flex-col gap-2 pt-4">
       {cards.map((card) => {
-        const { label, tone } = getCardCopy(card.state);
-        const conversationTitle = card.title?.trim() || "Untitled conversation";
+        const { label, tone } = getCardCopy(card.state, {
+          approval: t("activityApproval"),
+          failed: t("activityFailed"),
+          finished: t("activityFinished"),
+        });
+        const conversationTitle =
+          card.title?.trim() || t("untitledConversation");
 
         return (
           <div
@@ -82,7 +93,7 @@ export function InAppAgentActivityCards({
               variant="ghost"
               size="icon-xs"
               className="text-muted-foreground -mt-1 -mr-1 shrink-0"
-              aria-label="Dismiss"
+              aria-label={t("dismiss")}
               onClick={() => {
                 onDismiss(card);
               }}

@@ -35,14 +35,10 @@ import { getFinalModelParams } from "@/src/utils/getFinalModelParams";
 import { showErrorToast } from "@/src/features/notifications";
 import { Skeleton } from "@/src/components/ui/skeleton";
 import {
-  CreateExperimentData,
+  createExperimentData,
   type CreateExperiment,
 } from "@/src/features/experiments/types";
-import {
-  generateDefaultExperimentName,
-  generateDefaultExperimentDescription,
-  generateDatasetRunName,
-} from "@/src/features/experiments/util";
+import { generateDatasetRunName } from "@/src/features/experiments/util";
 
 // Import step components
 import { PromptModelStep } from "./steps/PromptModelStep";
@@ -52,11 +48,11 @@ import { ExperimentDetailsStep } from "./steps/ExperimentDetailsStep";
 import { ReviewStep } from "./steps/ReviewStep";
 import type { ExperimentEvaluatorAssignmentsHandle } from "@/src/features/experiments/components/ExperimentEvaluatorAssignments/types/experimentEvaluatorAssignmentsHandle";
 import { canNavigateToExperimentStep } from "@/src/features/experiments/fns/canNavigateToExperimentStep";
+import { useTranslations } from "next-intl";
 
 // Import step prop types
 import {
   hasPromptToolStructuredOutputConflict,
-  PROMPT_TOOL_STRUCTURED_OUTPUT_CONFLICT_MESSAGE,
   PromptType,
 } from "@langfuse/shared";
 
@@ -110,6 +106,7 @@ export const MultiStepExperimentForm = ({
   enableLegacyNameValidation?: boolean;
   useV2Evaluators?: boolean;
 }) => {
+  const t = useTranslations("evaluationAnalytics.experiments");
   const capture = usePostHogClientCapture();
   const [activeStep, setActiveStep] = useState("prompt");
   const evaluatorAssignmentsRef =
@@ -133,11 +130,11 @@ export const MultiStepExperimentForm = ({
   );
 
   const steps = [
-    { id: "prompt", label: "Prompt & Model" },
-    { id: "dataset", label: "Dataset" },
-    { id: "evaluators", label: "Evaluators" },
-    { id: "details", label: "Experiment run details" },
-    { id: "review", label: "Review" },
+    { id: "prompt", label: t("steps.navigation.promptAndModel") },
+    { id: "dataset", label: t("common.dataset") },
+    { id: "evaluators", label: t("common.evaluators") },
+    { id: "details", label: t("steps.details.title") },
+    { id: "review", label: t("steps.navigation.review") },
   ];
 
   const hasEvalReadAccess = useHasProjectAccess({
@@ -160,7 +157,16 @@ export const MultiStepExperimentForm = ({
   });
 
   const form = useForm({
-    resolver: zodResolver(CreateExperimentData),
+    resolver: zodResolver(
+      createExperimentData({
+        experimentNameRequired: t("validation.experimentNameRequired"),
+        runNameRequired: t("validation.runNameRequired"),
+        promptRequired: t("validation.promptRequired"),
+        datasetRequired: t("validation.datasetRequired"),
+        providerRequired: t("validation.providerRequired"),
+        modelRequired: t("validation.modelRequired"),
+      }),
+    ),
     defaultValues: {
       promptId: "",
       datasetId: "",
@@ -262,8 +268,8 @@ export const MultiStepExperimentForm = ({
     onSuccess: handleExperimentSuccess ?? (() => {}),
     onError: (error) => {
       showErrorToast(
-        error.message || "Failed to trigger dataset run",
-        "Please try again.",
+        error.message || t("errors.triggerDatasetRunFailed"),
+        t("common.tryAgain"),
       );
     },
     onSettled: handleExperimentSettled ?? (() => {}),
@@ -320,8 +326,8 @@ export const MultiStepExperimentForm = ({
       )
     ) {
       showErrorToast(
-        PROMPT_TOOL_STRUCTURED_OUTPUT_CONFLICT_MESSAGE,
-        "Disable structured output or choose a prompt without tools.",
+        t("steps.prompt.toolStructuredOutputConflict"),
+        t("steps.prompt.resolveToolConflict"),
       );
       return;
     }
@@ -345,18 +351,18 @@ export const MultiStepExperimentForm = ({
     const selectedDataset = datasets.data?.find((d) => d.id === datasetId);
     if (!selectedDataset) return;
 
-    const defaultName = generateDefaultExperimentName(
-      selectedPromptName,
-      selectedPromptVersion,
-      selectedDataset.name,
-    );
+    const defaultName = t("defaults.name", {
+      prompt: selectedPromptName,
+      version: selectedPromptVersion,
+      dataset: selectedDataset.name,
+    });
     form.setValue("name", defaultName, { shouldValidate: true });
 
-    const defaultDescription = generateDefaultExperimentDescription(
-      selectedPromptName,
-      selectedPromptVersion,
-      selectedDataset.name,
-    );
+    const defaultDescription = t("defaults.description", {
+      prompt: selectedPromptName,
+      version: selectedPromptVersion,
+      dataset: selectedDataset.name,
+    });
     form.setValue("description", defaultDescription);
   }, [
     selectedPromptName,
@@ -364,6 +370,7 @@ export const MultiStepExperimentForm = ({
     datasetId,
     datasets.data,
     form,
+    t,
   ]);
 
   // Auto-generate run name when experiment name changes
@@ -467,7 +474,7 @@ export const MultiStepExperimentForm = ({
     ) {
       return (
         <CircleX
-          aria-label={`${stepLabel} has errors`}
+          aria-label={t("steps.navigation.hasErrors", { step: stepLabel })}
           className="mr-1.5 h-3.5 w-3.5 text-red-500"
         />
       );
@@ -485,8 +492,12 @@ export const MultiStepExperimentForm = ({
     invalidRequiredStepLabels.length === 0
       ? undefined
       : invalidRequiredStepLabels.length === 1
-        ? `Complete the ${invalidRequiredStepLabels[0]} step before running the experiment.`
-        : `Complete the following steps before running the experiment: ${invalidRequiredStepLabels.join(", ")}.`;
+        ? t("steps.review.completeStep", {
+            step: invalidRequiredStepLabels[0],
+          })
+        : t("steps.review.completeSteps", {
+            steps: invalidRequiredStepLabels.join(", "),
+          });
 
   if (
     !promptsByName ||
@@ -578,18 +589,17 @@ export const MultiStepExperimentForm = ({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Run Experiment</DialogTitle>
+        <DialogTitle>{t("create.title")}</DialogTitle>
         <DialogDescription>
-          Run an experiment to evaluate prompts and model configurations against
-          a dataset. See{" "}
+          {t("create.formDescription")}{" "}
           <Link
             href="https://langfuse.com/docs/evaluation/dataset-runs/native-run"
             target="_blank"
             className="underline"
           >
-            documentation
+            {t("common.documentation")}
           </Link>{" "}
-          to learn more.
+          {t("common.toLearnMore")}
         </DialogDescription>
       </DialogHeader>
       {enableLegacyNameValidation && (
@@ -701,7 +711,7 @@ export const MultiStepExperimentForm = ({
                 disabled={activeStep === "prompt"}
               >
                 <ChevronLeft className="mr-2 h-4 w-4" />
-                Previous
+                {t("common.previous")}
               </Button>
 
               <div className="flex gap-2">
@@ -721,7 +731,7 @@ export const MultiStepExperimentForm = ({
                         v2EvaluatorSelection.isUpdating)
                     }
                   >
-                    Next
+                    {t("common.next")}
                     <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
                 ) : (
@@ -730,7 +740,7 @@ export const MultiStepExperimentForm = ({
                     disabled={!isStepValid("review")}
                     loading={form.formState.isSubmitting}
                   >
-                    Run Experiment
+                    {t("create.title")}
                   </Button>
                 )}
               </div>

@@ -6,6 +6,7 @@ import {
   type ObservationVariableMapping,
 } from "@langfuse/shared";
 import { ChevronDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/src/components/ui/button";
 import { PopoverTrigger } from "@/src/components/ui/popover";
@@ -49,6 +50,7 @@ export function EvaluatorSavedDialogContainer({
   onDismiss: () => Promise<void>;
   onFinish: () => Promise<void>;
 }) {
+  const t = useTranslations("evaluationAnalytics.evaluations");
   const capture = usePostHogClientCapture();
   const utils = api.useUtils();
   const activation = useActivationConfirmation({ projectId });
@@ -106,8 +108,16 @@ export function EvaluatorSavedDialogContainer({
     supportedFilters: supportedRuleFilters,
     unsupportedReasons: unsupportedRuleFilterReasons,
   } = useMemo(
-    () => classifySampleFiltersForRule(evaluator.sampleFilter),
-    [evaluator.sampleFilter],
+    () =>
+      classifySampleFiltersForRule(evaluator.sampleFilter, {
+        measures: t("evaluator.savedDialog.unsupportedFilters.measuresReason"),
+        scores: t("evaluator.savedDialog.unsupportedFilters.scoresReason"),
+        formatColumn: (label) =>
+          t("evaluator.savedDialog.unsupportedFilters.columnReason", {
+            label,
+          }),
+      }),
+    [evaluator.sampleFilter, t],
   );
   const selectedRule = availableRules.find(
     (rule) => rule.id === selectedRuleId,
@@ -213,9 +223,9 @@ export function EvaluatorSavedDialogContainer({
                   sampling,
                 },
               ],
-              title: "Review evaluator cost",
+              title: t("evaluator.savedDialog.reviewCost"),
               description: "",
-              confirmLabel: "Continue",
+              confirmLabel: t("evaluator.savedDialog.continue"),
               onConfirm: async () => undefined,
             },
             {
@@ -244,6 +254,7 @@ export function EvaluatorSavedDialogContainer({
       evaluator.testRunCostUsd,
       requestActivation,
       setActivationOpen,
+      t,
     ],
   );
 
@@ -375,11 +386,15 @@ export function EvaluatorSavedDialogContainer({
               className="truncate"
               title={
                 selectedRule?.name ??
-                (selectedRuleId === null ? "New rule" : "Select a rule")
+                (selectedRuleId === null
+                  ? t("rules.picker.newRule")
+                  : t("evaluator.savedDialog.selectRule"))
               }
             >
               {selectedRule?.name ??
-                (selectedRuleId === null ? "New rule" : "Select a rule")}
+                (selectedRuleId === null
+                  ? t("rules.picker.newRule")
+                  : t("evaluator.savedDialog.selectRule"))}
             </span>
             <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -406,16 +421,17 @@ export function EvaluatorSavedDialogContainer({
             />
             {selectedRule.assignments.length > 0 ? (
               <p className="text-muted-foreground text-sm">
-                Already attached to:{" "}
-                {selectedRule.assignments
-                  .map(({ evaluator }) => evaluator.name)
-                  .join(", ")}
+                {t("evaluator.savedDialog.alreadyAttachedTo", {
+                  evaluators: selectedRule.assignments
+                    .map(({ evaluator }) => evaluator.name)
+                    .join(", "),
+                })}
               </p>
             ) : null}
           </>
         ) : selectedRuleId === null ? (
           <p className="text-muted-foreground text-sm">
-            Continue to the rule editor to create a rule for this evaluator.
+            {t("evaluator.savedDialog.createRulePrompt")}
           </p>
         ) : null}
       </div>
@@ -446,9 +462,11 @@ export function EvaluatorSavedDialogContainer({
     />
   ) : evaluator.type !== EvalTemplateType.CODE ? (
     <div className="space-y-2">
-      <h3 className="text-sm font-bold">Cost estimate</h3>
+      <h3 className="text-sm font-bold">
+        {t("evaluator.savedDialog.costEstimate")}
+      </h3>
       <p className="text-muted-foreground text-sm">
-        Costs will be estimated in the rule editor.
+        {t("evaluator.savedDialog.costEstimateInRuleEditor")}
       </p>
     </div>
   ) : null;
@@ -468,10 +486,10 @@ export function EvaluatorSavedDialogContainer({
       }
       primaryActionLabel={
         mode === "test-filters"
-          ? "Execute"
+          ? t("evaluator.savedDialog.execute")
           : selectedRule
-            ? "Execute"
-            : "Open rule editor"
+            ? t("evaluator.savedDialog.execute")
+            : t("evaluator.savedDialog.openRuleEditor")
       }
       onModeChange={handleModeChange}
       onDismiss={() => {

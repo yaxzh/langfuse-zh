@@ -1,6 +1,6 @@
 /* eslint-disable @repo/no-null-render */
 import { useRef } from "react";
-import { formatDistanceToNow } from "date-fns";
+import { useFormatter } from "next-intl";
 import {
   useTopBanner,
   useTopBannerRegistration,
@@ -17,6 +17,7 @@ const PREVIEW_BANNER_ORDER = 20;
  * are unset everywhere else, so the banner never renders outside previews.
  */
 export function PreviewDeploymentBanner() {
+  const format = useFormatter();
   const bannerRef = useRef<HTMLDivElement>(null);
   const { getTopBannerOffset } = useTopBanner();
 
@@ -45,12 +46,15 @@ export function PreviewDeploymentBanner() {
       prUrl={prUrl}
       prNumber={/\/pull\/(\d+)/.exec(prUrl)?.[1]}
       author={env.NEXT_PUBLIC_PREVIEW_PR_AUTHOR}
-      updatedText={
+      updatedText={lastUpdated ? format.relativeTime(lastUpdated) : undefined}
+      updatedTitle={
         lastUpdated
-          ? formatDistanceToNow(lastUpdated, { addSuffix: true })
+          ? format.dateTime(lastUpdated, {
+              dateStyle: "medium",
+              timeStyle: "medium",
+            })
           : undefined
       }
-      updatedTitle={lastUpdated?.toLocaleString()}
       topOffset={getTopBannerOffset(PREVIEW_BANNER_ORDER)}
     />
   );

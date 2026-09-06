@@ -3,6 +3,7 @@ import { usePostHogClientCapture } from "@/src/features/posthog-analytics";
 import { type ProjectMigrationReadiness } from "@/src/features/v4-migration/migrationData";
 import { useOpenV4MigrationPanel } from "@/src/features/v4-migration/hooks/useOpenV4MigrationPanel";
 import { PARTNER_INTEGRATION_FAQ_URL } from "@/src/features/v4-migration/partnerIntegrationDocs";
+import { useTranslations } from "next-intl";
 
 export function V4MigrationProjectChip({
   project,
@@ -14,6 +15,7 @@ export function V4MigrationProjectChip({
     "action-needed" | "partner-managed"
   >;
 }) {
+  const t = useTranslations("remainderUi.migrations");
   const openMigrationPanel = useOpenV4MigrationPanel();
   const capture = usePostHogClientCapture();
 
@@ -30,9 +32,9 @@ export function V4MigrationProjectChip({
           event.stopPropagation();
         }}
         className="text-muted-foreground ring-border hover:bg-muted/50 relative inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-xs whitespace-nowrap ring"
-        title="Upgrade is handled by your integration partner. Click on badge to learn more."
+        title={t("partnerManaged.tooltip")}
       >
-        Update to v4 managed by integration partner
+        {t("partnerManaged.projectChip")}
       </a>
     );
   }
@@ -52,7 +54,7 @@ export function V4MigrationProjectChip({
         aria-hidden
         className="size-1.75 shrink-0 rounded-full bg-orange-400 dark:bg-orange-400"
       ></span>
-      Update
+      {t("common.update")}
     </button>
   );
 }

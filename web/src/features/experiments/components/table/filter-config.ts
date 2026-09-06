@@ -11,33 +11,33 @@ import type { ColumnDefinition } from "@langfuse/shared";
 // These must align with packages/shared/src/server/tableMappings/mapExperimentTable.ts
 export const experimentsTableCols: ColumnDefinition[] = [
   {
-    name: "ID",
+    name: "id",
     id: "id",
     type: "string",
     internal: "experiment_id",
   },
   {
-    name: "Name",
+    name: "name",
     id: "name",
     type: "string",
     internal: "experiment_name",
   },
   {
-    name: "Description",
+    name: "description",
     id: "description",
     type: "string",
     internal: "experiment_description",
     nullable: true,
   },
   {
-    name: "Metadata",
+    name: "metadata",
     id: "metadata",
     type: "stringObject",
     internal: "experiment_metadata",
     nullable: true,
   },
   {
-    name: "Referenced Prompts",
+    name: "prompts",
     id: "prompts",
     type: "string",
     internal: "prompts",
@@ -49,7 +49,7 @@ export const experimentsTableCols: ColumnDefinition[] = [
   // translated to `experimentDatasetId` on the way to the query (the dataset
   // name is not a ClickHouse column) — see fns/datasetNameFilter.
   {
-    name: "Dataset",
+    name: "experimentDatasetName",
     id: "experimentDatasetName",
     type: "stringOptions",
     internal: "experiment_dataset_id",
@@ -58,40 +58,40 @@ export const experimentsTableCols: ColumnDefinition[] = [
   // Still filterable so URLs and saved views written before the switch keep
   // resolving; no longer offered as a facet.
   {
-    name: "Dataset ID",
+    name: "experimentDatasetId",
     id: "experimentDatasetId",
     type: "stringOptions",
     internal: "experiment_dataset_id",
     options: [],
   },
   {
-    name: "Start Time",
+    name: "startTime",
     id: "startTime",
     type: "datetime",
     internal: "start_time",
   },
   {
-    name: "Item Count",
+    name: "itemCount",
     id: "itemCount",
     type: "number",
     internal: "item_count",
   },
   {
-    name: "Total Cost ($)",
+    name: "totalCost",
     id: "totalCost",
     type: "number",
     internal: "total_cost",
     nullable: true,
   },
   {
-    name: "Latency (s)",
+    name: "latencyAvg",
     id: "latencyAvg",
     type: "number",
     internal: "latency_avg",
     nullable: true,
   },
   {
-    name: "Error Count",
+    name: "errorCount",
     id: "errorCount",
     type: "number",
     internal: "error_count",
@@ -103,14 +103,14 @@ export const experimentsTableCols: ColumnDefinition[] = [
   // aliases too: a saved view may store a column by its label, and
   // `validateFilters` drops what it cannot resolve.
   {
-    name: "Numeric Scores",
+    name: "scores_avg",
     id: "scores_avg",
     type: "numberObject",
     internal: "scores_avg",
     aliases: ["obs_scores_avg", "Scores (numeric)"],
   },
   {
-    name: "Categorical Scores",
+    name: "score_categories",
     id: "score_categories",
     type: "categoryOptions",
     internal: "score_categories",
@@ -119,7 +119,7 @@ export const experimentsTableCols: ColumnDefinition[] = [
     aliases: ["obs_score_categories", "Scores (categorical)"],
   },
   {
-    name: "Boolean Scores",
+    name: "score_booleans",
     id: "score_booleans",
     type: "booleanObject",
     internal: "score_booleans",
@@ -128,25 +128,28 @@ export const experimentsTableCols: ColumnDefinition[] = [
   },
   // Trace-level scores (ets.* alias in backend)
   {
-    name: "Trace Scores (numeric)",
+    name: "trace_scores_avg",
     id: "trace_scores_avg",
     type: "numberObject",
     internal: "trace_scores_avg",
+    aliases: ["Trace Scores (numeric)"],
   },
   {
-    name: "Trace Scores (categorical)",
+    name: "trace_score_categories",
     id: "trace_score_categories",
     type: "categoryOptions",
     internal: "trace_score_categories",
     options: [],
     nullable: true,
+    aliases: ["Trace Scores (categorical)"],
   },
   {
-    name: "Trace Scores (boolean)",
+    name: "trace_score_booleans",
     id: "trace_score_booleans",
     type: "booleanObject",
     internal: "trace_score_booleans",
     nullable: true,
+    aliases: ["Trace Scores (boolean)"],
   },
 ];
 
@@ -274,6 +277,7 @@ export function isExperimentsOmittableFilterColumn(
 }
 
 export function getExperimentsFilterConfig(
+  getLabel: (columnId: string) => string,
   omittedFilter: ExperimentsOmittableFilterColumn[] = [],
   datasetNameById: ReadonlyMap<string, string> = new Map(),
 ): FilterConfig {
@@ -288,6 +292,14 @@ export function getExperimentsFilterConfig(
 
   return {
     ...config,
+    columnDefinitions: config.columnDefinitions.map((column) => ({
+      ...column,
+      name: getLabel(column.id),
+    })),
+    facets: config.facets.map((facet) => ({
+      ...facet,
+      label: getLabel(facet.column),
+    })),
     migrateFilterState: foldLegacyDatasetColumn(datasetNameById),
   };
 }

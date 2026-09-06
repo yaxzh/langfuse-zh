@@ -16,6 +16,7 @@ import { Button } from "@/src/components/ui/button";
 import { ActionButton } from "@/src/components/ActionButton";
 import { BookOpen, X } from "lucide-react";
 import type { ObservationStatusMessage } from "./components/statusMessagePresentation";
+import { useTranslations } from "next-intl";
 
 export type { ViewMode };
 export type IOPreviewContentMode = "all" | "conversation";
@@ -150,6 +151,7 @@ export function IOPreview({
   environment = "default",
   showCorrections = true,
 }: IOPreviewProps) {
+  const t = useTranslations("coreObservability.ioPreview");
   const capture = usePostHogClientCapture();
   // The normalized-parser formatted view is gated to admins and explicitly
   // flagged users; it must never surface for regular users.
@@ -338,7 +340,7 @@ export function IOPreview({
                     : [...prev, EMPTY_IO_ALERT_ID],
                 );
               }}
-              title="Dismiss"
+              title={t("dismiss")}
             >
               <X className="h-3.5 w-3.5" />
             </Button>
@@ -346,12 +348,10 @@ export function IOPreview({
               <div className="bg-accent flex h-8 w-8 items-center justify-center rounded-full">
                 <BookOpen className="text-muted-foreground h-4 w-4" />
               </div>
-              <h3 className="text-sm font-bold">
-                Looks like this trace didn&apos;t receive an input or output.
-              </h3>
+              <h3 className="text-sm font-bold">{t("emptyTitle")}</h3>
             </div>
             <p className="text-muted-foreground max-w-sm text-sm">
-              Add it in your code to make debugging a lot easier.
+              {t("emptyDescription")}
             </p>
             <ActionButton
               variant="outline"
@@ -360,7 +360,7 @@ export function IOPreview({
               trackingEventName="notification:click_link"
               trackingProps={{ notification_id: EMPTY_IO_ALERT_ID }}
             >
-              View Documentation
+              {t("viewDocumentation")}
             </ActionButton>
           </div>
         </div>

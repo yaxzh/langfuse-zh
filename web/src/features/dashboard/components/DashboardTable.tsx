@@ -22,6 +22,8 @@ import { EditDialogDashboardContent } from "@/src/features/dashboard/components/
 import { CloneFirstDialogController } from "@/src/features/dashboard/components/CloneFirstDialogController";
 import { useRouter } from "next/router";
 import { DialogController } from "@/src/components/ui/dialog";
+import { useTranslations } from "next-intl";
+import { getManagedDashboardMessageKey } from "@/src/features/dashboard/lib/managed-dashboard-localization";
 
 type DashboardTableRow = {
   id: string;
@@ -30,9 +32,12 @@ type DashboardTableRow = {
   createdAt: Date;
   updatedAt: Date;
   owner: "PROJECT" | "LANGFUSE";
+  rawName?: string;
 };
 
 export function DashboardTable() {
+  const t = useTranslations("systemUi.dashboardExtras");
+  const widgetT = useTranslations("systemUi.widgetExtras");
   const projectId = useProjectIdFromURL() as string;
   const { setDetailPageList } = useDetailPageLists();
   const router = useRouter();
@@ -45,14 +50,28 @@ export function DashboardTable() {
     onSuccess: () => {
       utils.dashboard.invalidate();
       showSuccessToast({
-        title: "Dashboard cloned",
-        description: "The dashboard has been cloned successfully",
+        title: t("dashboardCloned"),
+        description: t("dashboardClonedDescription"),
       });
     },
     onError: (error) => {
-      showErrorToast("Failed to clone dashboard", error.message);
+      showErrorToast(t("cloneFailed"), error.message);
     },
   });
+
+  const localizeManagedDashboard = (
+    dashboard: DashboardTableRow,
+  ): DashboardTableRow => {
+    const messageKey = getManagedDashboardMessageKey(dashboard);
+    if (!messageKey) return dashboard;
+
+    return {
+      ...dashboard,
+      rawName: dashboard.name,
+      name: t(`managedDashboards.${messageKey}.name`),
+      description: t(`managedDashboards.${messageKey}.description`),
+    };
+  };
 
   const [orderByState, setOrderByState] = useOrderByState({
     column: "updatedAt",
@@ -94,7 +113,7 @@ export function DashboardTable() {
   const dashboardColumns = [
     createLinkTableColumn<DashboardTableRow>({
       accessorKey: "name",
-      header: "Name",
+      header: t("name"),
       enableSorting: true,
       size: 200,
       getCell: (name, { row }) => {
@@ -113,12 +132,12 @@ export function DashboardTable() {
     }),
     createTextTableColumn<DashboardTableRow>({
       accessorKey: "description",
-      header: "Description",
+      header: t("description"),
       size: 300,
     }),
     columnHelper.display({
       id: "ownerTag",
-      header: "Owner",
+      header: t("owner"),
       size: 80,
       cell: (row) => {
         return row.row.original.owner === "LANGFUSE" ? (
@@ -130,20 +149,20 @@ export function DashboardTable() {
           </span>
         ) : (
           <span className="flex gap-1 px-2 py-0.5 text-xs">
-            <UserIcon className="h-3 w-3" /> Project
+            <UserIcon className="h-3 w-3" /> {t("project")}
           </span>
         );
       },
     }),
     createDateTableColumn<DashboardTableRow>({
       accessorKey: "createdAt",
-      header: "Created At",
+      header: t("createdAt"),
       enableSorting: true,
       size: 150,
     }),
     createDateTableColumn<DashboardTableRow>({
       accessorKey: "updatedAt",
-      header: "Updated At",
+      header: t("updatedAt"),
       enableSorting: true,
       size: 150,
     }),
@@ -153,7 +172,10 @@ export function DashboardTable() {
     <CloneFirstDialogController
       projectId={projectId}
       dashboardId={selectedDashboard?.id ?? ""}
-      dashboardName={selectedDashboard?.name ?? "Dashboard"}
+      dashboardName={
+        selectedDashboard?.rawName ?? selectedDashboard?.name ?? "Dashboard"
+      }
+      dashboardDisplayName={selectedDashboard?.name}
     >
       {({ openDialog: openCloneFirstDialog }) => (
         <DialogController
@@ -193,7 +215,7 @@ export function DashboardTable() {
                     createDropdownTableColumn<DashboardTableRow, string>({
                       id: "actions",
                       accessorFn: (row) => row.id,
-                      header: "Actions",
+                      header: t("actions"),
                       size: 70,
                       renderMenu: (id, { row }) => {
                         if (!id) return null;
@@ -219,7 +241,7 @@ export function DashboardTable() {
                               }}
                             >
                               <Edit className="mr-2 h-4 w-4" />
-                              Edit
+                              {t("edit")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               disabled={!hasAccess}
@@ -242,7 +264,7 @@ export function DashboardTable() {
                               }}
                             >
                               <Copy className="mr-2 h-4 w-4" />
-                              Clone
+                              {t("clone")}
                             </DropdownMenuItem>
                             {dashboard.owner === "PROJECT" ? (
                               <DropdownMenuItem
@@ -257,7 +279,7 @@ export function DashboardTable() {
                                 }}
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
+                                {widgetT("delete")}
                               </DropdownMenuItem>
                             ) : null}
                           </>
@@ -281,7 +303,7 @@ export function DashboardTable() {
                               dashboards.data,
                               "dashboards",
                               [],
-                            ),
+                            ).map(localizeManagedDashboard),
                           }
                   }
                   orderBy={orderByState}

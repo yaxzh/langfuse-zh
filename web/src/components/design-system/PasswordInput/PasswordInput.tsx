@@ -1,5 +1,6 @@
 import { useState, type InputHTMLAttributes, type Ref } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { useSharedUiTranslations } from "@/src/utils/shared-ui-translations";
 
 type PasswordInputProps = Pick<
   InputHTMLAttributes<HTMLInputElement>,
@@ -26,6 +27,7 @@ type PasswordInputProps = Pick<
 };
 
 export function PasswordInput({ ref, disabled, ...props }: PasswordInputProps) {
+  const t = useSharedUiTranslations("accessibility");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   return (
@@ -39,7 +41,7 @@ export function PasswordInput({ ref, disabled, ...props }: PasswordInputProps) {
       />
       <button
         type="button"
-        aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+        aria-label={isPasswordVisible ? t("hidePassword") : t("showPassword")}
         aria-pressed={isPasswordVisible}
         disabled={disabled}
         // Keep the reveal toggle out of the tab order so Tab moves between the

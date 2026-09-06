@@ -1,9 +1,31 @@
-import { StrictMode, useState } from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { StrictMode, type ReactElement, useState } from "react";
+import {
+  fireEvent,
+  render as renderTestingLibrary,
+  screen,
+} from "@testing-library/react";
 import { type VisibilityState } from "@tanstack/react-table";
 import { DataTableColumnVisibilityFilter } from "@/src/components/table/data-table-column-visibility-filter";
 import { LAYER_ORDER } from "@/src/components/ui/layer";
 import { type LangfuseColumnDef } from "@/src/components/table/types";
+import { NextIntlClientProvider } from "next-intl";
+import englishMessages from "@/src/features/i18n/messages/en/sharedUi.json";
+import chineseMessages from "@/src/features/i18n/messages/zh-CN/sharedUi.json";
+
+const renderWithMessages = (
+  element: ReactElement,
+  locale: "en" | "zh-CN" = "en",
+) =>
+  renderTestingLibrary(
+    <NextIntlClientProvider
+      locale={locale}
+      messages={{
+        sharedUi: locale === "en" ? englishMessages : chineseMessages,
+      }}
+    >
+      {element}
+    </NextIntlClientProvider>,
+  );
 
 const h = vi.hoisted(() => ({
   capture: vi.fn(),
@@ -145,7 +167,7 @@ describe("DataTableColumnVisibilityFilter", () => {
   });
 
   it("toggles a hideable column when its label is clicked", () => {
-    render(<ColumnVisibilityFilterHarness />);
+    renderWithMessages(<ColumnVisibilityFilterHarness />);
 
     fireEvent.click(screen.getByRole("button", { name: /columns/i }));
 
@@ -158,7 +180,7 @@ describe("DataTableColumnVisibilityFilter", () => {
   });
 
   it("captures column_visibility_changed once with tableName and isV4", () => {
-    render(<ColumnVisibilityFilterHarness />);
+    renderWithMessages(<ColumnVisibilityFilterHarness />);
 
     fireEvent.click(screen.getByRole("button", { name: /columns/i }));
     fireEvent.click(screen.getByText("Input"));
@@ -177,7 +199,7 @@ describe("DataTableColumnVisibilityFilter", () => {
   // StrictMode is what makes this a guard rather than a restatement of the
   // test above.
   it("counts one toggle once under StrictMode", () => {
-    render(
+    renderWithMessages(
       <StrictMode>
         <ColumnVisibilityFilterHarness />
       </StrictMode>,
@@ -194,7 +216,7 @@ describe("DataTableColumnVisibilityFilter", () => {
   });
 
   it("notifies onColumnGroupToggle with the group id, not score names", () => {
-    render(<GroupedColumnVisibilityHarness />);
+    renderWithMessages(<GroupedColumnVisibilityHarness />);
 
     fireEvent.click(screen.getByRole("button", { name: /columns/i }));
     fireEvent.click(screen.getByRole("button", { name: "Select All" }));
@@ -208,5 +230,15 @@ describe("DataTableColumnVisibilityFilter", () => {
     expect(JSON.stringify(h.onColumnGroupToggle.mock.calls[0][0])).not.toMatch(
       /helpfulness|accuracy/,
     );
+  });
+
+  it("renders column controls in Chinese", () => {
+    renderWithMessages(<ColumnVisibilityFilterHarness />, "zh-CN");
+
+    fireEvent.click(screen.getByRole("button", { name: /列/ }));
+
+    expect(screen.getByText("列显示设置")).toBeInTheDocument();
+    expect(screen.getByText("恢复默认设置")).toBeInTheDocument();
+    expect(screen.getByText("取消选择所有列")).toBeInTheDocument();
   });
 });

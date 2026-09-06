@@ -23,6 +23,7 @@ import {
   NO_DATASET_LABEL,
   UNNAMED_DATASET_LABEL,
 } from "@/src/features/experiments/constants/comparison";
+import { useTranslations } from "next-intl";
 
 export type ExperimentOption = Omit<ExperimentNameOption, "startTime"> & {
   /** null when an id in the URL no longer resolves to a run. */
@@ -88,6 +89,7 @@ export function ExperimentComparisonSelector({
   isAutoSelectEnabled,
   onAutoSelectEnabledChange,
 }: ExperimentComparisonSelectorProps) {
+  const t = useTranslations("evaluationAnalytics.experiments");
   const {
     searchResults,
     searchQuery,
@@ -315,7 +317,7 @@ export function ExperimentComparisonSelector({
   return (
     <div className="space-y-2">
       <MultiSelectCombobox<ComparisonRow>
-        labelLeft="Compare"
+        labelLeft={t("compare")}
         selectedItems={selectedRows}
         onItemsChange={handleItemsChange}
         searchQuery={searchQuery}
@@ -325,8 +327,10 @@ export function ExperimentComparisonSelector({
         onOpenChange={handleOpenChange}
         placeholder={
           isMaxReached
-            ? `Max ${MAX_SELECTED_EXPERIMENTS} experiments`
-            : "Search experiments..."
+            ? t("selection.maxExperiments", {
+                count: MAX_SELECTED_EXPERIMENTS,
+              })
+            : t("selection.searchExperiments")
         }
         disabled={isLoading}
         showSearchIcon={false}
@@ -505,7 +509,9 @@ export function ExperimentComparisonSelector({
                   onRemove();
                 }}
                 className="hover:bg-muted ml-0.5 rounded-full"
-                aria-label={`Remove ${option.experimentName}`}
+                aria-label={t("selection.removeComparison", {
+                  name: option.experimentName,
+                })}
               >
                 <X className="h-3 w-3" />
               </button>
